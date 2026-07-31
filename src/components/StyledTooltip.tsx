@@ -67,7 +67,11 @@ const StyledTooltip: React.FC<StyledTooltipProps> = ({
   const [visible, setVisible] = useState(false);
   const [styles, setStyles] = useState({});
 
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // `ReturnType<typeof setTimeout>`, not `NodeJS.Timeout`: this is browser
+  // code, and naming the NodeJS namespace makes the whole package fail to
+  // typecheck for any consumer that has not installed @types/node. It also
+  // happens to be wrong — in a browser this is a number, not a Timeout object.
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const triggerRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
 

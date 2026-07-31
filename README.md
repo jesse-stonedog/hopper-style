@@ -19,13 +19,29 @@ contribution rules.
 
 ## Install
 
+**Not published to npm.** Consume it from git — either a plain dependency, or a
+submodule if you want to develop against it:
+
 ```bash
-npm install hopper-style
+# Option A — git dependency, pinned to a commit
+npm install "git+https://github.com/jesse-stonedog/hopper-style.git#<sha>"
+
+# Option B — submodule + file: dependency (use this in a monorepo)
+git submodule add git@github.com:jesse-stonedog/hopper-style.git packages/hopper-style
+#   then in the consuming app's package.json:
+#   "hopper-style": "file:../../packages/hopper-style"
 ```
+
+Pin to a commit rather than tracking a branch: this package ships source that
+your build parses, so an unpinned bump changes your CSS without changing your
+lockfile in any way you'd notice.
 
 Peer dependencies: `react` ≥18, `react-dom` ≥18, `@pandacss/dev` ≥1.9.
 
 ## Setup
+
+Four steps. **All four are required** — miss step 3 or 4 and the app renders,
+but invisibly or unstyled, with no error anywhere to tell you why.
 
 **1 — add the preset to your `panda.config.ts`:**
 
@@ -61,17 +77,103 @@ because Panda extracts styles statically at *your* build. In Next.js:
 module.exports = { transpilePackages: ["hopper-style"] };
 ```
 
-**3 — define the custom properties.** Every token reads one, and a token with
-no property behind it renders as nothing. `requiredCssCustomProperties()`
-returns the full list so you can assert you have them all:
+**3 — define the custom properties. This is the step that bites.** Every colour
+token reads one, and **a token whose property is undefined renders as nothing** —
+no fallback, no warning, no error. An app that skips this compiles, builds,
+serves, and shows you a blank page.
+
+There are **44** of them. Get the list at runtime rather than copying one:
+
+```ts
+import { requiredCssCustomProperties } from "hopper-style/preset";
+
+requiredCssCustomProperties();           // --hopper-* (default)
+requiredCssCustomProperties("maximus");  // --maximus-*, if you set cssVarPrefix
+```
+
+A complete starter theme — all 44, nothing elided. Dark, and every text/surface
+pair clears WCAG AA (measured: worst 5.17:1, ten of thirteen pairs at AAA), so
+it is a legitimate starting point rather than a placeholder. Replace the values;
+keep every key.
 
 ```css
 :root {
+  /* Surfaces */
+  --hopper-box-main-bg: #0f172a;
   --hopper-box-primary-bg: #1e293b;
+  --hopper-box-secondary-bg: #334155;
+  --hopper-box-accent-bg: #0b1220;
+  --hopper-box-info-bg: #1e3a5f;
+
+  /* Text on those surfaces */
+  --hopper-box-main-text: #f8fafc;
   --hopper-box-primary-text: #f8fafc;
-  /* … */
+  --hopper-box-secondary-text: #f1f5f9;
+  --hopper-box-accent-text: #e2e8f0;
+
+  /* Text that carries meaning on its own */
+  --hopper-text-pop-text: #38bdf8;
+  --hopper-text-error-text: #f87171;
+  --hopper-text-warning-text: #fbbf24;
+
+  /* Borders */
+  --hopper-box-primary-border: #475569;
+  --hopper-box-secondary-border: #64748b;
+  --hopper-box-accent-border: #334155;
+
+  /* Shadows */
+  --hopper-shadow-primary-bg: rgb(0 0 0 / 0.4);
+  --hopper-shadow-secondary-bg: rgb(0 0 0 / 0.3);
+  --hopper-shadow-accent-bg: rgb(0 0 0 / 0.5);
+
+  /* Buttons */
+  --hopper-button-primary-bg: #2563eb;
+  --hopper-button-secondary-bg: #475569;
+  --hopper-button-accent-bg: #1e293b;
+  --hopper-button-primary-hover-bg: #1d4ed8;
+  --hopper-button-secondary-hover-bg: #334155;
+  --hopper-button-accent-hover-bg: #334155;
+  --hopper-button-primary-text: #ffffff;
+  --hopper-button-secondary-text: #f8fafc;
+  --hopper-button-accent-text: #f8fafc;
+  --hopper-button-primary-hover-text: #ffffff;
+  --hopper-button-secondary-hover-text: #ffffff;
+  --hopper-button-accent-hover-text: #ffffff;
+  --hopper-button-plain-bg: transparent;
+  --hopper-button-plain-text: #f8fafc;
+
+  /* Icons */
+  --hopper-icon-primary-bg: #94a3b8;
+  --hopper-icon-secondary-bg: #64748b;
+  --hopper-icon-accent-bg: #cbd5e1;
+  --hopper-icon-primary-hover-bg: #cbd5e1;
+  --hopper-icon-secondary-hover-bg: #94a3b8;
+  --hopper-icon-accent-hover-bg: #e2e8f0;
+
+  /* Arrows / carets */
+  --hopper-arrow-primary-bg: #94a3b8;
+  --hopper-arrow-secondary-bg: #64748b;
+  --hopper-arrow-accent-bg: #cbd5e1;
+  --hopper-arrow-primary-border: #475569;
+  --hopper-arrow-secondary-border: #64748b;
+  --hopper-arrow-accent-border: #334155;
 }
 ```
+
+Guard it with a test rather than trusting a checklist — the failure is invisible,
+so nothing else will tell you:
+
+```ts
+it("defines every property the design system reads", () => {
+  const css = readFileSync("src/theme.css", "utf8");
+  for (const prop of requiredCssCustomProperties()) {
+    expect(css).toContain(`${prop}:`);
+  }
+});
+```
+
+One optional extra, not in that list because it has a working fallback:
+`--hopper-widget-base-height` (default `240px`) caps dropdown menus.
 
 **4 — mount the provider** (optional; omitting it gives readable defaults):
 
@@ -82,6 +184,29 @@ import { HopperStyleProvider } from "hopper-style";
   <App />
 </HopperStyleProvider>;
 ```
+
+### Check it actually worked
+
+Three greps against your generated stylesheet, in order. Each isolates one of
+the three ways this goes wrong silently:
+
+```bash
+npx panda cssgen --outfile styled-system/styles.css
+
+# 1. Did the preset load? Expect ~44 matches, not 0.
+grep -c 'var(--hopper-' styled-system/styles.css
+
+# 2. Did Panda parse the package's source? Expect ~240 classes, not ~0.
+#    A low number means your `include` glob is wrong (step 1).
+grep -oE '\.[a-zA-Z][a-zA-Z0-9_-]+' styled-system/styles.css | sort -u | wc -l
+
+# 3. Did you keep the base presets? Expect all six breakpoints.
+grep 'BreakpointToken =' styled-system/tokens/tokens.d.ts
+# -> "sm" | "md" | "lg" | "xl" | "2xl" | "3xl"
+#    Only "3xl" means you dropped @pandacss/preset-base and preset-panda.
+```
+
+If all three pass and the UI is still blank, you are missing step 3.
 
 ## Use
 
@@ -121,6 +246,96 @@ namespace at build time:
 ```ts
 hopperStylePreset({ cssVarPrefix: "acme" }); // → var(--acme-box-primary-bg)
 ```
+
+The rename is total — every token re-points, and no `--hopper-*` reference
+survives anywhere in the generated CSS. Choose it **before** you write a theme,
+because it changes all 44 property names you have to define.
+
+## Adopting it in a new app — a worked example
+
+Verified end to end against a clean project. Substitute your own prefix and
+paths; nothing else here is optional.
+
+```bash
+# 1. Take the dependency (see Install — it is not on npm)
+npm install "git+https://github.com/jesse-stonedog/hopper-style.git#<sha>"
+npm install -D @pandacss/dev @types/react @types/react-dom
+```
+
+`@types/react-dom` is not optional: the tooltip portals through `react-dom`,
+and without the types your build fails on our source, not yours.
+
+```ts
+// 2. panda.config.ts — all four points below matter
+import { defineConfig } from "@pandacss/dev";
+import { hopperStylePreset } from "hopper-style/preset";
+
+export default defineConfig({
+  preflight: false,
+  presets: [
+    "@pandacss/preset-base",   // (a) REQUIRED — presets replaces, not merges
+    "@pandacss/preset-panda",  // (b) REQUIRED — gray.*, radii, spacing
+    hopperStylePreset({ cssVarPrefix: "acme" }),
+  ],
+  include: [
+    "./src/**/*.{ts,tsx}",
+    "./node_modules/hopper-style/src/**/*.tsx",  // (c) REQUIRED
+  ],
+  exclude: ["./node_modules/hopper-style/src/**/__tests__/**/*"],  // (d)
+  outdir: "styled-system",
+  jsxFramework: "react",
+});
+```
+
+```jsonc
+// 3. tsconfig.json — so the generated `styled-system/*` imports resolve
+{
+  "compilerOptions": {
+    // NOT `baseUrl`. TypeScript 6 removed it, and a project on a current
+    // toolchain fails immediately with TS5102. This form does the same job
+    // and works on both.
+    "paths": { "*": ["./*"] },
+    "jsx": "react-jsx",
+    "moduleResolution": "bundler"
+  },
+  "include": ["src/**/*", "styled-system/**/*.ts"]
+}
+```
+
+```tsx
+// 4. Your root — theme first, then the provider
+import "./theme.css";                 // the 44 properties, from step 3 above
+import { HopperStyleProvider } from "hopper-style";
+
+export function Root({ children }) {
+  return (
+    <HopperStyleProvider fontSizeProfile="md" variant="solid">
+      {children}
+    </HopperStyleProvider>
+  );
+}
+```
+
+```bash
+# 5. Generate, then run the three checks under "Check it actually worked"
+npx panda codegen && npx panda cssgen --outfile styled-system/styles.css
+```
+
+**What each mistake looks like**, since none of them raise an error:
+
+| Symptom | Cause |
+|---|---|
+| Page renders, everything invisible or unstyled colours | Step 3 — properties undefined |
+| Components render but have no styling at all | `include` missing the package (c) |
+| Some styles apply, spacing and radii look wrong | Dropped a base preset (a/b) |
+| `md`/`lg` responsive props rejected by the type-checker | Dropped a base preset (a/b) |
+| `Cannot find module 'styled-system/jsx'` | No `paths` mapping, or codegen not run |
+| `TS5102: Option 'baseUrl' has been removed` | TypeScript 6+; use `paths` (step 3) |
+| `Could not find a declaration file for 'react-dom'` | Missing `@types/react-dom` (step 1) |
+| Works in dev, breaks in a Next.js build | Missing `transpilePackages` |
+
+Every row is a failure this walkthrough actually hit on a clean project, not a
+list of things that might go wrong.
 
 ## Logging
 
