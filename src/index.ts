@@ -1,0 +1,114 @@
+/**
+ * hopper-style — public API.
+ *
+ * Components are exported both as named exports and, individually, as default
+ * exports from their own module. Prefer the named export; the default exports
+ * exist because the originating codebase used them at ~1,400 call sites and
+ * changing that was not worth bundling into the extraction.
+ *
+ * The Panda preset is NOT re-exported here. It is imported by the consumer's
+ * `panda.config.ts`, which runs in Node at build time, and pulling the whole
+ * component tree (and React with it) into that context is a needless cost —
+ * hence the separate `hopper-style/preset` entry point.
+ */
+
+// ---------------------------------------------------------------------------
+// Configuration seam — what a host application must wire up.
+// ---------------------------------------------------------------------------
+export {
+  HopperStyleProvider,
+  useStyleConfig,
+  useFontSizeProfile,
+  useResolvedVariant,
+  DEFAULT_STYLE_CONFIG,
+} from "./config/style-config";
+export type {
+  StyleConfig,
+  HopperStyleProviderProps,
+} from "./config/style-config";
+
+export { setStyleLogger } from "./config/logger";
+export type { StyleLogger } from "./config/logger";
+
+export {
+  fontSizeMap,
+  getFontSizeLabel,
+  getFontSizeValue,
+  stepUpFontSize,
+  FONT_SIZE_ORDER,
+} from "./config/font-size";
+
+export {
+  THEME_VARIANTS,
+  STYLE_VARIANTS,
+  TEXT_VARIANTS,
+  ALL_VARIANTS,
+  FONT_SIZE_PROFILES,
+  FONT_SIZE_KEYS,
+  isThemeVariant,
+  isFontSizeProfile,
+} from "./config/types";
+export type {
+  ThemeVariant,
+  StyleVariant,
+  AllowedVariant,
+  AllowedTextVariant,
+  FontSizeProfile,
+  FontSizeKey,
+} from "./config/types";
+
+// ---------------------------------------------------------------------------
+// Layout primitives
+// ---------------------------------------------------------------------------
+export { default as StyledBox, StyledBox as Box } from "./components/StyledBox";
+export type { StyledBoxProps } from "./components/StyledBox";
+
+export { default as StyledFlex } from "./components/StyledFlex";
+export type { StyledFlexProps } from "./components/StyledFlex";
+
+export { default as StyledGrid } from "./components/StyledGrid";
+export type { StyledGridProps } from "./components/StyledGrid";
+
+export { default as StyledGridItem } from "./components/StyledGridItem";
+export type { StyledGridItemProps } from "./components/StyledGridItem";
+
+export { default as StyledSimpleGrid } from "./components/StyledSimpleGrid";
+
+export { default as StyledStack } from "./components/StyledStack";
+export type { StyledStackProps } from "./components/StyledStack";
+
+export { default as StyledHStack } from "./components/StyledHStack";
+export type { StyledHStackProps } from "./components/StyledHStack";
+
+export { default as StyledVStack } from "./components/StyledVStack";
+export type { StyledVStackProps } from "./components/StyledVStack";
+
+export { default as StyledScrollbar } from "./components/StyledScrollbar";
+export type { StyledScrollbarProps } from "./components/StyledScrollbar";
+
+// ---------------------------------------------------------------------------
+// Typography & dividers
+// ---------------------------------------------------------------------------
+export { default as StyledText } from "./components/StyledText";
+export type { StyledTextProps } from "./components/StyledText";
+
+export { default as StyledHeading } from "./components/StyledHeading";
+
+export { default as StyledSeparator } from "./components/StyledSeparator";
+export type { StyledSeparatorProps } from "./components/StyledSeparator";
+
+export { default as StyledHrRule } from "./components/StyledHrRule";
+export type { StyledHrRuleProps } from "./components/StyledHrRule";
+
+// ---------------------------------------------------------------------------
+// Icons — the seam, not the artwork. See the README.
+// ---------------------------------------------------------------------------
+export { default as StyledIcon } from "./components/StyledIcon";
+export type { StyledIconProps, IconSize } from "./components/StyledIcon";
+export { createIcon, createIconFromComponent } from "./components/create-icon";
+
+// ---------------------------------------------------------------------------
+// Overlay
+// ---------------------------------------------------------------------------
+export { default as StyledTooltip } from "./components/StyledTooltip";
+export type { StyledTooltipProps } from "./components/StyledTooltip";
