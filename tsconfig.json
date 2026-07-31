@@ -1,0 +1,33 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "noEmit": true,
+    "declaration": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    // Makes the generated `styled-system/*` imports resolve, exactly as they do
+    // in a consuming app. There is no path alias for it — the directory is real,
+    // produced by `panda codegen`, and gitignored.
+    "baseUrl": "."
+  },
+  // `test/` is included for its side effect: test/setup.ts imports
+  // @testing-library/jest-dom, whose module augmentation is what teaches tsc
+  // about toBeInTheDocument and friends. Without it the suite runs green but
+  // the typecheck fails on every matcher.
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "test/**/*.ts",
+    "panda.config.ts",
+    "styled-system/**/*.ts"
+  ],
+  "exclude": ["node_modules", "dist", "coverage"]
+}
