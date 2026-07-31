@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "description": "A Panda CSS design system: a themeable Panda preset plus the React components built on it.",
   "license": "Apache-2.0",
+  "author": "StoneDogCode L.L.C.",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/jesse-stonedog/hopper-style.git"
@@ -29,7 +30,7 @@
     "pretype-check": "npm run panda:prepare",
     "type-check": "tsc --noEmit",
     "lint": "eslint . --ext ts,tsx",
-    "//pretest": "panda:build, not panda:prepare — the token-contract suite asserts against the generated stylesheet, which cssgen produces and codegen alone does not.",
+    "//pretest": "panda:build, not panda:prepare \u2014 the token-contract suite asserts against the generated stylesheet, which cssgen produces and codegen alone does not.",
     "pretest": "npm run panda:build",
     "test": "jest",
     "test:coverage": "jest --coverage",
@@ -74,8 +75,5 @@
     "react",
     "components",
     "theme"
-  ],
-  "contributors": [
-    "The hopper-style Authors"
   ]
 }
