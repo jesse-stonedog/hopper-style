@@ -22,7 +22,7 @@ export const boxRecipe = defineRecipe({
         px: { base: 6, md: 8 },
         py: { base: 2, md: 4 },
         bg: "boxBgPrimary",
-        color: "var(--text-primary)",
+        color: "textPrimary",
       },
       outline: {
         px: { base: 6, md: 8 },

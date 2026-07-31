@@ -98,6 +98,33 @@ const COLOR_TOKENS: TokenMap = {
 };
 
 /**
+ * Host-provided *layout* properties, as `token name → [suffix, fallback]`.
+ *
+ * These differ from the colours in one way that matters: they carry a fallback,
+ * so a host that never sets them still renders something sensible rather than
+ * nothing. They are routed through the token layer anyway, for the same reason
+ * the colours are — a recipe writing `var(--hopper-…)` directly would ignore a
+ * consumer's chosen prefix, silently, and no amount of correct configuration on
+ * their side would fix it.
+ */
+const SIZE_TOKENS: Record<string, [suffix: string, fallback: string]> = {
+  /** Height budget for a dashboard widget; also caps dropdown menus. */
+  widgetBaseHeight: ["widget-base-height", "240px"],
+};
+
+/** Panda size-token definitions, bound to a custom-property prefix. */
+export function createSemanticSizes(
+  prefix: string = DEFAULT_CSS_VAR_PREFIX,
+): Record<string, { value: string }> {
+  return Object.fromEntries(
+    Object.entries(SIZE_TOKENS).map(([token, [suffix, fallback]]) => [
+      token,
+      { value: `var(--${prefix}-${suffix}, ${fallback})` },
+    ]),
+  );
+}
+
+/**
  * The default custom-property prefix.
  *
  * `hopper` rather than something neutral because HopperGuard's theme engine

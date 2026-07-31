@@ -24,7 +24,7 @@ export const inputDropdownContentRecipe = defineRecipe({
       content: {
         borderRadius: "md",
         boxShadow: "lg",
-        maxHeight: "var(--hopper-widget-base-height, 240px)",
+        maxHeight: "widgetBaseHeight",
         overflowY: "auto",
       },
       item: {

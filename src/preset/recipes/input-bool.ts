@@ -41,13 +41,13 @@ export const inputBoolRecipe = defineSlotRecipe({
       solid: {
         control: {
           bg: "buttonBgAccent",
-          color: "var(--text-primary)",
+          color: "textPrimary",
         },
       },
       outline: {
         control: {
           bg: "buttonBgAccent",
-          color: "var(--text-primary)",
+          color: "textPrimary",
         },
       },
       aurora: {

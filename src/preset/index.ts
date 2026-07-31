@@ -30,6 +30,7 @@ import { tooltipRecipe } from "./recipes/tooltip";
 import {
   DEFAULT_CSS_VAR_PREFIX,
   createSemanticColors,
+  createSemanticSizes,
 } from "./semantic-variables";
 
 export interface HopperStylePresetOptions {
@@ -136,6 +137,7 @@ export function hopperStylePreset(options: HopperStylePresetOptions = {}) {
         },
         tokens: {
           colors: createSemanticColors(cssVarPrefix),
+          sizes: createSemanticSizes(cssVarPrefix),
         },
         keyframes: {
           spin: {
@@ -157,6 +159,7 @@ export {
   TEXT_BACKGROUND_PAIRS,
   colorTokenNames,
   createSemanticColors,
+  createSemanticSizes,
   getBackgroundForText,
   requiredCssCustomProperties,
 } from "./semantic-variables";

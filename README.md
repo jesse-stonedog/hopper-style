@@ -132,12 +132,93 @@ import { setStyleLogger } from "hopper-style";
 setStyleLogger(myLogger); // trace / debug / info / warn / error
 ```
 
-## Icons
+## Icons — bring your own
 
-Not included. The system exposes an icon-agnostic seam and renders whatever node
-you hand it, so you can bring any icon set. This is deliberate: the components
-were extracted from an app using a per-seat commercial icon library, which
-cannot be redistributed under this licence.
+**This package ships no icons, and that is the point.** `StyledIcon` is a
+sizing-and-colouring wrapper that renders *whatever node you hand it*, so you
+choose the icon set and nothing about it leaks into the library. Lucide,
+Heroicons, Font Awesome, Material Symbols, your designer's SVGs — all equally
+supported, and you can mix them.
+
+```tsx
+import { StyledIcon } from "hopper-style";
+import { Home } from "lucide-react";
+
+<StyledIcon icon={<Home />} size="lg" />;
+```
+
+### Building an icon set
+
+An icon set is a few hundred near-identical wrappers, and hand-writing them is
+how a set drifts — one forgets to forward `size`, another hardcodes a colour.
+`createIcon` makes each one a line and forces them to agree:
+
+```tsx
+// icons.tsx — your own module, in your own repo
+import { createIcon, createIconFromComponent } from "hopper-style";
+import { Home, Trash2 } from "lucide-react";
+
+export const StyledHome  = createIcon("StyledHome", <Home />);
+export const StyledTrash = createIconFromComponent("StyledTrash", Trash2);
+```
+
+Use `createIconFromComponent` when the set exports one component per glyph
+(Lucide, Heroicons, react-icons). It renders them at `width`/`height` 100% so
+they fill the box `size` establishes — most sets default to 24px and would
+otherwise ignore `size` entirely. Use `createIcon` when you have a node already.
+
+### Sizing
+
+`size` accepts `xs`, `sm`, `1x`, `md`, `lg`, `2x`, `xl`, `3x` … `10x` and sets a
+square box in CSS px (`lg` → 24, `2x` → 32, default `2x`). It always wins over a
+height or width in a spread `style` prop, so sizing stays predictable.
+
+### Colouring
+
+Two mechanisms, because icon libraries disagree about how they take a colour:
+
+| Your icon set draws with… | What to do |
+|---|---|
+| `currentColor` — Lucide, Heroicons, Feather, Material Symbols, most SVGs | Nothing. `color` is set on the wrapper and inherits. |
+| its own CSS variables — e.g. Font Awesome duotone | Map the published `--icon-*` properties, once. |
+
+`StyledIcon` publishes `--icon-primary-color`, `--icon-secondary-color` and
+`--icon-secondary-opacity` under **neutral names** so no icon library is baked
+into this package. A set that wants different names needs one CSS rule:
+
+```css
+/* Font Awesome adapter — one rule, in your app */
+.icon svg {
+  --fa-primary-color:     var(--icon-primary-color);
+  --fa-secondary-color:   var(--icon-secondary-color);
+  --fa-secondary-opacity: var(--icon-secondary-opacity, 0.4);
+}
+```
+
+Colours default to the theme tokens (`textMain`, `iconBgPrimary`), so an icon
+with no explicit colour follows the host's theme and colour mode automatically.
+Pass `color` / `secondaryColor` to override per call site.
+
+### Accessibility
+
+`title` is the whole interface, and the default is the one you want more often:
+
+```tsx
+<StyledIcon icon={<Trash2 />} />                  {/* decorative: aria-hidden */}
+<StyledIcon icon={<Trash2 />} title="Delete" />   {/* meaningful: role="img" + name */}
+```
+
+Give `title` **only** when the icon carries meaning no adjacent text already
+conveys — an icon-only button, for instance. An icon sitting next to its own
+label must stay untitled, or screen readers announce the name twice.
+
+### Why it works this way
+
+The components were extracted from an app built on a per-seat commercial icon
+set whose artwork cannot be redistributed under this licence. Rather than pick a
+replacement and impose it on everyone, the artwork was cut out entirely. Your
+licensed set can live in a private package while the components that lay it out
+stay open — which is exactly the arrangement the original app now uses.
 
 ## Development
 

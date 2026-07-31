@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import {
   DEFAULT_CSS_VAR_PREFIX,
   TEXT_BACKGROUND_PAIRS,
@@ -42,6 +44,48 @@ describe("the colour token contract", () => {
     // and it is invisible until a theme change moves only one of them.
     const props = requiredCssCustomProperties();
     expect(new Set(props).size).toBe(props.length);
+  });
+});
+
+describe("recipes honour the configurable prefix", () => {
+  const recipeSource = readFileSync(
+    join(__dirname, "..", "..", "..", "styled-system", "styles.css"),
+    "utf8",
+  );
+
+  it("never hardcodes the default namespace anywhere a token would do", () => {
+    // A literal `var(--hopper-…)` inside a recipe or component bypasses the
+    // token layer entirely, so it paints NOTHING for a consumer that chose a
+    // different prefix — silently, with no build error. Every such reference
+    // must arrive via `--colors-*`, which the token layer re-points.
+    //
+    // The token DEFINITIONS are the one legitimate place the default namespace
+    // appears — `--colors-x: var(--hopper-y)`, `--sizes-x: var(--hopper-y)` —
+    // because that layer is precisely what re-points under a custom prefix.
+    // Anything else (a `background:`, a `max-height:`) has bypassed it.
+    const isTokenDefinition = /^\s*--[a-z]+-[a-z0-9-]+:\s*var\(--hopper-/;
+    const offenders = recipeSource
+      .split("\n")
+      .filter((line) => line.includes("var(--hopper-"))
+      .filter((line) => !isTokenDefinition.test(line));
+
+    expect(offenders).toEqual([]);
+  });
+
+  it("resolves the outline hover background to a real token", () => {
+    // Regression guard for a defect carried in from the extraction: both
+    // button recipes named a `buttonBgHover` token that does not exist, so
+    // Panda emitted `background: buttonBgHover` — not a valid CSS value, and
+    // therefore dropped by the browser. That hover state never rendered.
+    expect(recipeSource).not.toContain("background: buttonBgHover");
+    expect(recipeSource).toContain("--colors-button-bg-accent-hover");
+  });
+
+  it("routes every colour through the token layer, not raw properties", () => {
+    // Same defect class: `color: var(--text-primary)` referenced a property in
+    // a namespace nothing defines, so those controls silently opted out of
+    // theming AND of contrast validation.
+    expect(recipeSource).not.toContain("var(--text-primary)");
   });
 });
 

@@ -34,8 +34,11 @@ export const drawerRecipe = defineRecipe({
         borderColor: "borderBgPrimary",
       },
       aurora: {
+        // Token references, not literal `var(--hopper-…)`: the custom-property
+        // prefix is configurable per consumer, so a hardcoded namespace paints
+        // nothing for any host that chose a different one.
         backgroundImage:
-          "linear-gradient(to right, var(--hopper-box-accent-bg), var(--hopper-box-secondary-bg))",
+          "linear-gradient(to right, {colors.boxBgAccent}, {colors.boxBgSecondary})",
         color: "white",
         borderColor: "transparent",
         textShadow: "0 1px 2px rgba(0,0,0,0.5)",

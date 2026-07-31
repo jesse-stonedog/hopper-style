@@ -101,6 +101,13 @@ export { default as StyledHrRule } from "./components/StyledHrRule";
 export type { StyledHrRuleProps } from "./components/StyledHrRule";
 
 // ---------------------------------------------------------------------------
+// Icons — the seam, not the artwork. See the README.
+// ---------------------------------------------------------------------------
+export { default as StyledIcon } from "./components/StyledIcon";
+export type { StyledIconProps, IconSize } from "./components/StyledIcon";
+export { createIcon, createIconFromComponent } from "./components/create-icon";
+
+// ---------------------------------------------------------------------------
 // Overlay
 // ---------------------------------------------------------------------------
 export { default as StyledTooltip } from "./components/StyledTooltip";

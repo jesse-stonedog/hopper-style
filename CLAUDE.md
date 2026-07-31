@@ -177,10 +177,13 @@ Two harness details that exist only to make the above work, both load-bearing:
 
 ## What may never land here
 
-- **Font Awesome Pro icons, or any icon wrapping them.** The licence is per-seat
-  and the vendored subset in HopperGuard contains actual Pro path data. Neither
-  can ship in a public Apache-2.0 repo. Icons live in a separate private package;
-  this one exposes an icon-agnostic seam and takes whatever node it is handed.
+- **Any icon artwork at all.** Not Font Awesome Pro (per-seat licence, and
+  HopperGuard's vendored subset contains actual Pro path data), and not a
+  permissive set either — picking one would impose it on every consumer and add
+  a dependency none of them asked for. `StyledIcon` renders whatever node it is
+  handed, and `createIcon` / `createIconFromComponent` make building a set a
+  line each. HopperGuard's licensed set lives in a private `hopper-icons`
+  package; the README shows how anyone else brings their own.
 - **Anything AGPL or copyleft.** One consumer is a proprietary SaaS. An AGPL
   dependency here would compromise its licence position, and unlike a bug that
   cannot be fixed after the fact.
@@ -191,26 +194,40 @@ Two harness details that exist only to make the above work, both load-bearing:
 - **Application concepts.** No auth, no data fetching, no routing, no
   `next/*` imports. A component that fetches is a feature, not a primitive.
 
-## Known inherited defects — do not "fix" these silently
+## Token compliance — the defect class this package keeps catching
 
-Carried over verbatim from the extraction so that HopperGuard's rendering did
-not change underneath it. Each is real, each is filed, and each should be fixed
-deliberately in its own PR with the visual diff understood — not folded into an
-unrelated change.
+Three separate bugs found during extraction shared one root cause: **a recipe
+naming a CSS custom property directly instead of going through a token.** They
+are fixed here (NEH-165, NEH-166, NEH-171) and guarded by a regression test that
+greps the generated stylesheet, so the class cannot come back quietly.
 
-- **`buttonBgHover` does not exist.** `recipes/button.ts` and
-  `recipes/icon-button.ts` both set `bg: "buttonBgHover"` on the `outline`
-  variant's hover, but no such token is defined anywhere. Panda emits
+Worth understanding rather than just obeying, because the failure mode is
+uniquely nasty — none of the three produced a build error, a console warning, or
+anything a type-checker could see:
+
+- **`bg: "buttonBgHover"`** — a token that was never defined. Panda passes an
+  unknown token through as a literal, so the stylesheet said
   `background: buttonBgHover`, which is not a valid CSS value, so the browser
-  drops the declaration — that hover state has never done anything. The intended
-  token is almost certainly one of the `buttonBg*Hover` trio.
-- **`var(--text-primary)` vs the `--hopper-*` namespace.** Several recipes set
-  `color: "var(--text-primary)"` — a custom property nothing in the system
-  defines, in a namespace the token contract does not use. Also flagged in
-  HopperGuard's PRD-0013 under token-compliance drift.
-- **Literal colours in recipes** — `gray.*`, `rgba(...)`, and a literal
-  `color: "black"` / `backgroundColor: "white"` in `recipes/input-text.ts`.
-  These misread under dark and high-contrast themes.
+  discarded it. The outline variant's hover background had **never rendered** in
+  production. Now `buttonBgAccentHover`, matching that variant's base state.
+- **`color: "var(--text-primary)"`**, 16 occurrences — a property in a namespace
+  the token contract does not use, and which nothing defines. Those controls
+  silently opted out of theming *and* of contrast validation. Now `textPrimary`.
+- **`var(--hopper-box-accent-bg)` in a gradient, `var(--hopper-widget-base-height)`
+  as a max-height** — correct inside HopperGuard, but they hardcode the default
+  namespace, so they ignore `cssVarPrefix` entirely. Now token references; the
+  max-height became a real `sizes` token, `widgetBaseHeight`.
+
+**The rule: never write `var(--…)` in a recipe or component for anything the
+host supplies.** Add a token instead — colours in `COLOR_TOKENS`, host-provided
+layout values in `SIZE_TOKENS` — and reference it by name. The token layer is
+the only thing that re-points under a custom prefix, so bypassing it is exactly
+what breaks the second consumer while looking fine to the first.
+
+Still outstanding, inherited and **not** fixed: literal `gray.*`, `rgba(...)`,
+and `color: "black"` / `backgroundColor: "white"` in `recipes/input-text.ts`.
+These misread under dark and high-contrast themes. Fixing them changes rendering
+in a visible way, so it wants its own PR and a real look at the result.
 
 ## Accessibility is a floor, not a feature
 

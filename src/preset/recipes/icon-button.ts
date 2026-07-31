@@ -31,21 +31,21 @@ export const buttonIconRecipe = defineRecipe({
     variant: {
       solid: {
         bg: "buttonBgAccent",
-        color: "var(--text-primary)",
+        color: "textPrimary",
         _hover: {
           bg: "buttonBgSecondary",
-          color: "var(--text-primary)",
+          color: "textPrimary",
         },
       },
       outline: {
         bg: "buttonBgAccent",
-        color: "var(--text-primary)",
+        color: "textPrimary",
         border: "1px solid",
         borderColor: "borderBgSecondary",
         borderRadius: 0,
         _hover: {
           border: "2px solid",
-          bg: "buttonBgHover",
+          bg: "buttonBgAccentHover",
         },
       },
       aurora: {
@@ -63,7 +63,7 @@ export const buttonIconRecipe = defineRecipe({
         borderColor: "black",
         borderRadius: "xl",
         bg: "buttonBgAccent",
-        color: "var(--text-primary)",
+        color: "textPrimary",
         boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
         backdropFilter: "blur(12px)",
         WebkitBackdropFilter: "blur(12px)",
@@ -100,16 +100,16 @@ export const buttonIconRecipe = defineRecipe({
         borderWidth: "1px",
         boxShadow: "md",
         bg: "buttonBgAccent",
-        color: "var(--text-primary)",
+        color: "textPrimary",
         borderRadius: "lg",
         fontWeight: "bold",
       },
       ghost: {
         bg: "buttonBgAccent/50",
-        color: "var(--text-primary)",
+        color: "textPrimary",
         _hover: {
           bg: "buttonBgAccent",
-          color: "var(--text-primary)",
+          color: "textPrimary",
           border: "1px solid",
           borderColor: "gray.700",
         },
