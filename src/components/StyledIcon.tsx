@@ -38,8 +38,15 @@ import { log } from "../config/logger";
  * originating app are written against it and silently changing what `"2x"`
  * means would have been an invisible, app-wide visual change. It is just a set
  * of names here — no icon library is implied by using them.
+ *
+ * It covers **all** of Font Awesome's `SizeProp`, `2xs` and `2xl` included.
+ * That completeness is the point: an adapter that maps its library's size type
+ * onto this one has to be able to, and an incomplete union turns into a
+ * type error at every call site that happens to use a missing value — which is
+ * exactly how this gap surfaced. `md` is the one addition, an alias for `1x`.
  */
 export type IconSize =
+  | "2xs"
   | "xs"
   | "sm"
   | "1x"
@@ -47,6 +54,7 @@ export type IconSize =
   | "lg"
   | "2x"
   | "xl"
+  | "2xl"
   | "3x"
   | "4x"
   | "5x"
@@ -58,6 +66,7 @@ export type IconSize =
 
 /** Rendered box size, in CSS px, for each size name. */
 const SIZE_TO_PX: Record<string, number> = {
+  "2xs": 10,
   xs: 12,
   sm: 16,
   "1x": 20,
@@ -65,6 +74,7 @@ const SIZE_TO_PX: Record<string, number> = {
   lg: 24,
   "2x": 32,
   xl: 32,
+  "2xl": 40,
   "3x": 48,
   "4x": 64,
   "5x": 80,
