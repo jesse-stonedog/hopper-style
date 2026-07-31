@@ -27,6 +27,28 @@ describe("StyledIcon", () => {
     expect(container.firstChild).toHaveStyle({ width: "32px", height: "32px" });
   });
 
+  it.each(["2xs", "xs", "sm", "1x", "md", "lg", "2x", "xl", "2xl", "3x", "10x"] as const)(
+    "resolves the size name %s to a real box",
+    (size) => {
+      // Every name in the union must map to a px value. A name with no entry
+      // silently falls back to 20px, so an icon would render at the wrong size
+      // with nothing failing — and the union has to stay a superset of Font
+      // Awesome's SizeProp for hopper-icons to map onto it at all.
+      const { container } = render(<StyledIcon size={size} icon={<svg />} />);
+      const width = (container.firstChild as HTMLElement).style.width;
+      expect(width).toMatch(/^\d+px$/);
+      expect(width).not.toBe("");
+    },
+  );
+
+  it("gives every size name a distinct box across the scale", () => {
+    const seen = ["2xs", "xs", "sm", "lg", "2x", "2xl", "3x"].map((size) => {
+      const { container } = render(<StyledIcon size={size as never} icon={<svg />} />);
+      return (container.firstChild as HTMLElement).style.width;
+    });
+    expect(new Set(seen).size).toBe(seen.length);
+  });
+
   it("does not let a caller's inline style defeat the size prop", () => {
     // `size` is the prop that exists to control the box. A stray height in a
     // spread style object silently winning would make sizing unpredictable.
