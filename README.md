@@ -573,6 +573,17 @@ npm test
 Tests run against the **real** generated `styled-system` rather than a mock, so
 recipe output is assertable — see CLAUDE.md for why that took some doing.
 
+### Design documents
+
+Components with enough behaviour to argue about get a PRD under `docs/prd/`,
+written before the component. They record what a component must do and — more
+usefully — what it deliberately does not, so the next person does not re-open a
+settled question.
+
+| PRD | Component | Status |
+|---|---|---|
+| [PRD-0001](docs/prd/PRD-0001-styled-sidebar.md) | `StyledSidebar` | Draft |
+
 ## License
 
 [Apache-2.0](./LICENSE). See [NOTICE](./NOTICE) for attribution.
