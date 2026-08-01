@@ -69,10 +69,53 @@ export const FONT_SIZE_KEYS = [
 ] as const;
 export type FontSizeKey = (typeof FONT_SIZE_KEYS)[number];
 
+/**
+ * The icon size vocabulary.
+ *
+ * Deliberately the Font Awesome scale, because ~150 call sites in the
+ * originating app are written against it and silently changing what `"2x"`
+ * means would have been an invisible, app-wide visual change. It is just a set
+ * of names here — no icon library is implied by using them.
+ *
+ * It covers **all** of Font Awesome's `SizeProp`, `2xs` and `2xl` included.
+ * That completeness is the point: an adapter that maps its library's size type
+ * onto this one has to be able to, and an incomplete union turns into a type
+ * error at every call site that happens to use a missing value. `md` is the one
+ * addition, an alias for `1x`.
+ *
+ * It lives here rather than beside `StyledIcon` because `StyleConfig` names it —
+ * the app-wide default icon size is a host setting — and having the config
+ * import the component that imports the config would be a cycle.
+ */
+export const ICON_SIZES = [
+  "2xs",
+  "xs",
+  "sm",
+  "1x",
+  "md",
+  "lg",
+  "2x",
+  "xl",
+  "2xl",
+  "3x",
+  "4x",
+  "5x",
+  "6x",
+  "7x",
+  "8x",
+  "9x",
+  "10x",
+] as const;
+export type IconSize = (typeof ICON_SIZES)[number];
+
 export function isThemeVariant(value: unknown): value is ThemeVariant {
   return THEME_VARIANTS.includes(value as ThemeVariant);
 }
 
 export function isFontSizeProfile(value: unknown): value is FontSizeProfile {
   return FONT_SIZE_PROFILES.includes(value as FontSizeProfile);
+}
+
+export function isIconSize(value: unknown): value is IconSize {
+  return ICON_SIZES.includes(value as IconSize);
 }

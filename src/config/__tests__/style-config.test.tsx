@@ -2,6 +2,7 @@ import { renderHook } from "@testing-library/react";
 import React from "react";
 import {
   HopperStyleProvider,
+  useIconSize,
   useResolvedVariant,
   useStyleConfig,
   DEFAULT_STYLE_CONFIG,
@@ -29,6 +30,34 @@ describe("useStyleConfig", () => {
     });
     expect(result.current.fontSizeProfile).toBe("xl");
     expect(result.current.variant).toBe(DEFAULT_STYLE_CONFIG.variant);
+    expect(result.current.iconSize).toBe(DEFAULT_STYLE_CONFIG.iconSize);
+  });
+});
+
+describe("useIconSize", () => {
+  it("defaults to 2x", () => {
+    // Pinned to what the originating application already renders. This default
+    // is a compatibility promise, not a taste judgement — changing it resizes
+    // every icon in every existing consumer, invisibly.
+    const { result } = renderHook(() => useIconSize());
+    expect(result.current).toBe("2x");
+    expect(DEFAULT_STYLE_CONFIG.iconSize).toBe("2x");
+  });
+
+  it("returns the host's app-wide setting", () => {
+    const { result } = renderHook(() => useIconSize(), {
+      wrapper: withConfig({ iconSize: "md" }),
+    });
+    expect(result.current).toBe("md");
+  });
+
+  it("is unaffected by the other settings", () => {
+    // Each field of StyleConfig merges independently; a host with an opinion
+    // about only one must not have the rest reset underneath it.
+    const { result } = renderHook(() => useIconSize(), {
+      wrapper: withConfig({ fontSizeProfile: "xs", variant: "aurora" }),
+    });
+    expect(result.current).toBe(DEFAULT_STYLE_CONFIG.iconSize);
   });
 });
 

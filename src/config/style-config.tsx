@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useMemo } from "react";
-import type { FontSizeProfile, ThemeVariant } from "./types";
+import type { FontSizeProfile, IconSize, ThemeVariant } from "./types";
 import { THEME_VARIANTS } from "./types";
 
 /**
@@ -29,6 +29,23 @@ export interface StyleConfig {
    * see `useResolvedVariant` for the precedence rule.
    */
   variant: ThemeVariant;
+
+  /**
+   * The app-wide default icon size, used by any `StyledIcon` that is not given
+   * an explicit `size`.
+   *
+   * This exists because the alternative is naming a size at every call site,
+   * which is how an application ends up with three icon scales and no way to
+   * retune any of them. Font size is already host-tunable — every `fontSizeMap`
+   * entry is a `var(--font-sizes-*)` reference the host can define — and this is
+   * the equivalent seam for icons.
+   *
+   * The default stays `"2x"`: HopperGuard serves an often-elderly, sometimes
+   * cognitively-impaired audience and runs deliberately large, and ~150 of its
+   * call sites rely on that default. A host wanting a conventional web scale
+   * (a business tool for a general audience) sets `"md"`.
+   */
+  iconSize: IconSize;
 }
 
 /**
@@ -42,6 +59,10 @@ export interface StyleConfig {
 export const DEFAULT_STYLE_CONFIG: StyleConfig = {
   fontSizeProfile: "md",
   variant: "solid",
+  // Not the middle of the scale, unlike the two above: this one is pinned to
+  // what the originating application already renders. Changing it would be an
+  // invisible, app-wide visual change to every existing consumer.
+  iconSize: "2x",
 };
 
 const StyleConfigContext = createContext<StyleConfig>(DEFAULT_STYLE_CONFIG);
@@ -71,14 +92,16 @@ export function HopperStyleProvider({
   children,
   fontSizeProfile,
   variant,
+  iconSize,
 }: HopperStyleProviderProps) {
   const value = useMemo<StyleConfig>(
     () => ({
       fontSizeProfile:
         fontSizeProfile ?? DEFAULT_STYLE_CONFIG.fontSizeProfile,
       variant: variant ?? DEFAULT_STYLE_CONFIG.variant,
+      iconSize: iconSize ?? DEFAULT_STYLE_CONFIG.iconSize,
     }),
-    [fontSizeProfile, variant],
+    [fontSizeProfile, variant, iconSize],
   );
 
   return (
@@ -96,6 +119,11 @@ export function useStyleConfig(): StyleConfig {
 /** The user's app-wide font-size profile. */
 export function useFontSizeProfile(): FontSizeProfile {
   return useStyleConfig().fontSizeProfile;
+}
+
+/** The app-wide default icon size. `StyledIcon` uses it when given no `size`. */
+export function useIconSize(): IconSize {
+  return useStyleConfig().iconSize;
 }
 
 /**

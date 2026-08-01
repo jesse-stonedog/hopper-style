@@ -1,6 +1,18 @@
+import React from "react";
 import { render, screen } from "@testing-library/react";
 import StyledIcon from "../StyledIcon";
 import { createIcon, createIconFromComponent } from "../create-icon";
+import { HopperStyleProvider } from "../../config/style-config";
+import type { IconSize } from "../../config/types";
+
+/** Renders inside a provider that sets only the app-wide icon size. */
+function withIconSize(iconSize: IconSize) {
+  return function IconSizeWrapper({ children }: { children: React.ReactNode }) {
+    return (
+      <HopperStyleProvider iconSize={iconSize}>{children}</HopperStyleProvider>
+    );
+  };
+}
 
 describe("StyledIcon", () => {
   it("renders whatever node it is handed", () => {
@@ -23,7 +35,37 @@ describe("StyledIcon", () => {
   });
 
   it("defaults to 2x", () => {
+    // The package default is pinned to what the originating application already
+    // renders at ~150 call sites. Changing it would be an invisible, app-wide
+    // visual change to every existing consumer.
     const { container } = render(<StyledIcon icon={<svg />} />);
+    expect(container.firstChild).toHaveStyle({ width: "32px", height: "32px" });
+  });
+
+  it("takes the app-wide default icon size from the provider", () => {
+    // The seam that lets a host run a conventional web scale without forking
+    // the package or naming a size at every call site.
+    const { container } = render(<StyledIcon icon={<svg />} />, {
+      wrapper: withIconSize("md"),
+    });
+    expect(container.firstChild).toHaveStyle({ width: "20px", height: "20px" });
+  });
+
+  it("lets a call site override the app-wide default", () => {
+    const { container } = render(<StyledIcon size="lg" icon={<svg />} />, {
+      wrapper: withIconSize("md"),
+    });
+    expect(container.firstChild).toHaveStyle({ width: "24px", height: "24px" });
+  });
+
+  it("keeps 2x when a host mounts the provider but sets no icon size", () => {
+    // Partial config must not silently reset the other settings — a host that
+    // only cares about the variant should not have its icons resize.
+    const { container } = render(<StyledIcon icon={<svg />} />, {
+      wrapper: ({ children }: { children: React.ReactNode }) => (
+        <HopperStyleProvider variant="glass">{children}</HopperStyleProvider>
+      ),
+    });
     expect(container.firstChild).toHaveStyle({ width: "32px", height: "32px" });
   });
 
@@ -127,6 +169,15 @@ describe("createIcon", () => {
     const Trash = createIcon("StyledTrash", <svg />);
     render(<Trash title="Delete" />);
     expect(screen.getByRole("img", { name: "Delete" })).toBeInTheDocument();
+  });
+
+  it("inherits the app-wide icon size, so a whole icon set retunes at once", () => {
+    // This is the property hopper-icons depends on: its ~145 wrappers are one
+    // line each around StyledIcon and name no size, so a host that sets
+    // `iconSize` retunes the entire licensed set without touching it.
+    const Home = createIcon("StyledHome", <svg />);
+    const { container } = render(<Home />, { wrapper: withIconSize("sm") });
+    expect(container.firstChild).toHaveStyle({ width: "16px", height: "16px" });
   });
 });
 

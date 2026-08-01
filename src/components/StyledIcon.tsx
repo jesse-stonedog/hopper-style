@@ -3,6 +3,8 @@
 import React from "react";
 import { iconRecipe } from "styled-system/recipes";
 import { log } from "../config/logger";
+import { useIconSize } from "../config/style-config";
+import type { IconSize } from "../config/types";
 
 /**
  * The icon seam.
@@ -32,37 +34,10 @@ import { log } from "../config/logger";
  */
 
 /**
- * Size vocabulary.
- *
- * Deliberately the Font Awesome scale, because ~150 call sites in the
- * originating app are written against it and silently changing what `"2x"`
- * means would have been an invisible, app-wide visual change. It is just a set
- * of names here — no icon library is implied by using them.
- *
- * It covers **all** of Font Awesome's `SizeProp`, `2xs` and `2xl` included.
- * That completeness is the point: an adapter that maps its library's size type
- * onto this one has to be able to, and an incomplete union turns into a
- * type error at every call site that happens to use a missing value — which is
- * exactly how this gap surfaced. `md` is the one addition, an alias for `1x`.
+ * Size vocabulary. Defined in `config/types` because `StyleConfig` names it
+ * too — re-exported here so the long-standing import path keeps working.
  */
-export type IconSize =
-  | "2xs"
-  | "xs"
-  | "sm"
-  | "1x"
-  | "md"
-  | "lg"
-  | "2x"
-  | "xl"
-  | "2xl"
-  | "3x"
-  | "4x"
-  | "5x"
-  | "6x"
-  | "7x"
-  | "8x"
-  | "9x"
-  | "10x";
+export type { IconSize };
 
 /** Rendered box size, in CSS px, for each size name. */
 const SIZE_TO_PX: Record<string, number> = {
@@ -96,7 +71,15 @@ export interface StyledIconProps
    */
   icon?: React.ReactNode;
   children?: React.ReactNode;
-  /** @default "2x" */
+  /**
+   * Box size. Omit it and the app-wide default from `HopperStyleProvider`
+   * applies (`"2x"` if the host sets nothing).
+   *
+   * **Prefer omitting it.** Setting the app-wide default once is what keeps an
+   * application to a single icon scale; a size named at the call site opts that
+   * icon out of ever being retuned. Pass it only where this specific icon must
+   * differ from everything around it.
+   */
   size?: IconSize;
   /** Primary colour. Defaults to the theme's main text colour. */
   color?: string;
@@ -123,7 +106,7 @@ const DEFAULT_SECONDARY = "var(--colors-icon-bg-primary)";
 const StyledIcon: React.FC<StyledIconProps> = ({
   icon,
   children,
-  size = "2x",
+  size: sizeProp,
   color,
   secondaryColor,
   secondaryOpacity,
@@ -133,6 +116,12 @@ const StyledIcon: React.FC<StyledIconProps> = ({
   ...rest
 }) => {
   log.trace("StyledIcon rendered");
+
+  // Caller's size, else the app-wide default, else "2x". Same precedence rule
+  // as `useResolvedVariant`, and shared for the same reason: when each control
+  // picks its own default, the app quietly grows several scales at once.
+  const appIconSize = useIconSize();
+  const size = sizeProp ?? appIconSize;
 
   const recipeClass = iconRecipe(
     RECIPE_SIZES.has(size) ? { size: size as "sm" | "md" | "lg" | "xl" } : {},
