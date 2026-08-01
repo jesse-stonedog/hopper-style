@@ -20,6 +20,7 @@ export const StyledAddButton = createIntentButton({
   displayName: "StyledAddButton",
   intent: "add",
   defaultLabel: "Add",
+  tooltip: "Add item",
 });
 
 export const StyledSaveButton = createIntentButton({
@@ -34,12 +35,14 @@ export const StyledDeleteButton = createIntentButton({
   intent: "delete",
   defaultLabel: "Delete",
   loadText: "Deleting",
+  tooltip: "Delete the item",
 });
 
 export const StyledEditButton = createIntentButton({
   displayName: "StyledEditButton",
   intent: "edit",
   defaultLabel: "Edit",
+  tooltip: "Modify this item.",
 });
 
 export const StyledCancelButton = createIntentButton({
@@ -52,6 +55,7 @@ export const StyledCloneButton = createIntentButton({
   displayName: "StyledCloneButton",
   intent: "clone",
   defaultLabel: "Clone",
+  tooltip: "Create a copy of the item.",
 });
 
 export const StyledBackButton = createIntentButton({
@@ -64,18 +68,21 @@ export const StyledNextButton = createIntentButton({
   displayName: "StyledNextButton",
   intent: "next",
   defaultLabel: "Next",
+  tooltip: "Proceed to next step.",
 });
 
 export const StyledNewButton = createIntentButton({
   displayName: "StyledNewButton",
   intent: "new",
   defaultLabel: "New",
+  tooltip: "Create a new item.",
 });
 
 export const StyledRenameButton = createIntentButton({
   displayName: "StyledRenameButton",
   intent: "rename",
   defaultLabel: "Rename",
+  tooltip: "Rename the item",
 });
 
 export const StyledLoadButton = createIntentButton({
@@ -83,12 +90,14 @@ export const StyledLoadButton = createIntentButton({
   intent: "load",
   defaultLabel: "Load",
   loadText: "Loading",
+  tooltip: "Load the item",
 });
 
 export const StyledResumeButton = createIntentButton({
   displayName: "StyledResumeButton",
   intent: "resume",
   defaultLabel: "Resume",
+  tooltip: "Resume activity",
 });
 
 export const StyledPlayButton = createIntentButton({
@@ -97,34 +106,38 @@ export const StyledPlayButton = createIntentButton({
   defaultLabel: "Play",
 });
 
-export const StyledFavoriteButton = createIntentButton({
-  displayName: "StyledFavoriteButton",
-  intent: "favorite",
-  defaultLabel: "Favorite",
-});
+// StyledFavoriteButton is deliberately absent. It is a stateful TOGGLE — its
+// icon colour and its tooltip both flip on `isFavorite` ("Mark as favorite" /
+// "Remove from favorites") — and the on-state colour is an app constant. That
+// is a different component from "a button with a star on it", so it stays in
+// the app rather than being bent into this factory.
 
 export const StyledSettingsButton = createIntentButton({
   displayName: "StyledSettingsButton",
   intent: "settings",
   defaultLabel: "Settings",
+  tooltip: "Changes settings",
 });
 
 export const StyledHomeButton = createIntentButton({
   displayName: "StyledHomeButton",
   intent: "home",
   defaultLabel: "Home",
+  tooltip: "Go to main page",
 });
 
 export const StyledMenuButton = createIntentButton({
   displayName: "StyledMenuButton",
   intent: "menu",
   defaultLabel: "Menu",
+  tooltip: "Open menu with additional options",
 });
 
 export const StyledAnalyticsButton = createIntentButton({
   displayName: "StyledAnalyticsButton",
   intent: "analytics",
   defaultLabel: "Analytics",
+  tooltip: "View data summary",
 });
 
 export const StyledEmojiButton = createIntentButton({
@@ -137,4 +150,5 @@ export const StyledUrlButton = createIntentButton({
   displayName: "StyledUrlButton",
   intent: "url",
   defaultLabel: "From URL",
+  tooltip: "Retrieve colors from external location.",
 });

@@ -52,6 +52,13 @@ export interface IntentButtonSpec {
   defaultLabel: string;
   /** What the spinner says while `loading`. Prefer naming the action. */
   loadText?: string;
+  /**
+   * Default hover/focus explanation.
+   *
+   * Deliberately more than the label repeated: "Delete" is the label, "Delete
+   * the item" is what the tooltip adds. A caller's own `tooltip` overrides.
+   */
+  tooltip?: string;
 }
 
 export function createIntentButton({
@@ -59,10 +66,11 @@ export function createIntentButton({
   intent,
   defaultLabel,
   loadText,
+  tooltip: defaultTooltip,
 }: IntentButtonSpec) {
   const IntentButton = React.forwardRef<HTMLButtonElement, IntentButtonProps>(
     function IntentButton(
-      { children = defaultLabel, iconOnly, icon, ...props },
+      { children = defaultLabel, iconOnly, icon, tooltip = defaultTooltip, ...props },
       ref,
     ) {
       const density = useDensity();
@@ -85,6 +93,7 @@ export function createIntentButton({
             // note above. An explicit aria-label from the caller still wins,
             // because `props` is spread after.
             aria-label={label}
+            tooltip={tooltip}
             {...props}
           >
             {glyph}
@@ -93,7 +102,13 @@ export function createIntentButton({
       }
 
       return (
-        <StyledButton ref={ref} loadText={loadText} leftIcon={glyph} {...props}>
+        <StyledButton
+          ref={ref}
+          loadText={loadText}
+          leftIcon={glyph}
+          tooltip={tooltip}
+          {...props}
+        >
           {children}
         </StyledButton>
       );
