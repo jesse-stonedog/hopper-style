@@ -133,3 +133,119 @@ describe("StyledTooltip", () => {
     expect(trigger).not.toHaveAttribute("aria-label");
   });
 });
+
+/**
+ * Click mode (NEH-222 / the StyledSidebar PRD, §B).
+ *
+ * Hover tooltips fail readers whose pointer drifts: the panel closes before
+ * they arrive, and one they are mid-way through reading vanishes when their
+ * hand moves. Click mode exists for them, and the thing that makes it usable
+ * is that the help control is *separate* — the child is usually a button, and
+ * that button's click has to keep belonging to the button.
+ */
+describe("StyledTooltip — click mode", () => {
+  it("defaults to hover: no help control, opens on pointer-in", () => {
+    render(
+      <StyledTooltip tooltip="Adds a note">
+        <button>Add</button>
+      </StyledTooltip>,
+    );
+
+    expect(screen.queryByRole("button", { name: "More information" })).not.toBeInTheDocument();
+    openBy(fireEvent.mouseEnter, screen.getByRole("button", { name: "Add" }));
+    expect(screen.getByRole("tooltip")).toBeInTheDocument();
+  });
+
+  it("renders a named help control and stays shut until it is pressed", () => {
+    render(
+      <StyledTooltip tooltip="Adds a note" trigger="click">
+        <button>Add</button>
+      </StyledTooltip>,
+    );
+
+    const help = screen.getByRole("button", { name: "More information" });
+    expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+    expect(help).toHaveAttribute("aria-expanded", "false");
+
+    fireEvent.click(help);
+
+    expect(screen.getByRole("tooltip")).toBeInTheDocument();
+    expect(help).toHaveAttribute("aria-expanded", "true");
+  });
+
+  it("ignores hover entirely — the whole reason click mode exists", () => {
+    render(
+      <StyledTooltip tooltip="Adds a note" trigger="click">
+        <button>Add</button>
+      </StyledTooltip>,
+    );
+
+    openBy(fireEvent.mouseEnter, screen.getByRole("button", { name: "Add" }));
+    expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+
+    // ...and an open panel is not dismissed by the pointer wandering off.
+    fireEvent.click(screen.getByRole("button", { name: "More information" }));
+    fireEvent.mouseLeave(screen.getByRole("button", { name: "Add" }));
+    expect(screen.getByRole("tooltip")).toBeInTheDocument();
+  });
+
+  it("leaves the child's own click alone", () => {
+    const onClick = jest.fn();
+    render(
+      <StyledTooltip tooltip="Adds a note" trigger="click">
+        <button onClick={onClick}>Add</button>
+      </StyledTooltip>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Add" }));
+
+    expect(onClick).toHaveBeenCalledTimes(1);
+    // Pressing the button must not also open help — that is the confusion this
+    // design exists to prevent.
+    expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+  });
+
+  it("closes on a second press, and on Escape with focus returned", () => {
+    render(
+      <StyledTooltip tooltip="Adds a note" trigger="click">
+        <button>Add</button>
+      </StyledTooltip>,
+    );
+    const help = screen.getByRole("button", { name: "More information" });
+
+    fireEvent.click(help);
+    fireEvent.click(help);
+    expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+
+    fireEvent.click(help);
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+    expect(help).toHaveFocus();
+  });
+
+  it("closes on a press outside, but not on one inside the explanation", () => {
+    render(
+      <StyledTooltip tooltip="Adds a note" trigger="click">
+        <button>Add</button>
+      </StyledTooltip>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "More information" }));
+
+    // Inside: the text may be worth selecting, or contain a link.
+    fireEvent.mouseDown(screen.getByRole("tooltip"));
+    expect(screen.getByRole("tooltip")).toBeInTheDocument();
+
+    fireEvent.mouseDown(document.body);
+    expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+  });
+
+  it("takes a specific help label when the context needs one", () => {
+    render(
+      <StyledTooltip tooltip="Shows events" trigger="click" helpLabel="What does Calendar do?">
+        <button>Calendar</button>
+      </StyledTooltip>,
+    );
+
+    expect(screen.getByRole("button", { name: "What does Calendar do?" })).toBeInTheDocument();
+  });
+});

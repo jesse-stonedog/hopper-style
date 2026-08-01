@@ -57,11 +57,14 @@ All three get the same component. Nothing here should be optimised for the third
 7. Help is **dismissible** by an explicit action and by Escape, and returns focus to the control that opened it.
 8. The help control is a real, focusable, named control in tab order — not a bare icon with a title attribute.
 
-> **Implementation note.** `StyledTooltip` today is hover/focus-triggered
-> (`onMouseEnter`/`onMouseLeave`, with a delay) and has no click mode. It needs
-> a `trigger?: "hover" | "click"` option — defaulting to `"hover"` so existing
-> callers are unaffected — or this needs a separate disclosure component.
-> Requirement 6 cannot be met by the current tooltip.
+> **Implementation note — done.** `StyledTooltip` now takes
+> `trigger?: "hover" | "click"` (defaulting to `"hover"`, so existing callers
+> are unaffected). In click mode it renders a **separate help control** beside
+> the child, because the child is usually a button and that click belongs to
+> the button — the reader must be able to see both that help exists and where
+> to press for it. Escape closes it and returns focus; a press outside closes
+> it; a press inside does not. Hosts generally wire `trigger` to a user
+> preference rather than setting it per call site.
 
 ### C. Selection
 
@@ -153,7 +156,7 @@ Binding, not aspirational:
 
 ## Rollout
 
-1. Extend `StyledTooltip` with a click trigger (or add a disclosure primitive) — §B is blocked on it.
+1. ~~Extend `StyledTooltip` with a click trigger~~ — **done**: `trigger="click"` with its own help control.
 2. Build `StyledSidebar` against this API, with tests.
 3. The reference consumer adopts it behind its existing navigation, then switches over.
 
