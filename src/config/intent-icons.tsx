@@ -41,6 +41,13 @@ import React, { createContext, useContext } from "react";
  * Named for what the button DOES, not what the glyph looks like — `delete`, not
  * `trash`. A host that maps `delete` to a broom is free to; the components only
  * care about the meaning.
+ *
+ * **Exactly the intents the shipped buttons use — no more.** `missingIntentIcons`
+ * is only meaningful if this list means "what a host must register for the
+ * components to draw"; padding it with intents nothing renders would make that
+ * function report work nobody needs to do. `close`, `copy`, `favorite` and
+ * `help` are absent for that reason: those buttons stayed in the app, because
+ * each carries app state or a stateful toggle rather than being a plain intent.
  */
 export const ICON_INTENTS = [
   "add",
@@ -48,13 +55,9 @@ export const ICON_INTENTS = [
   "back",
   "cancel",
   "clone",
-  "close",
-  "copy",
   "delete",
   "edit",
   "emoji",
-  "favorite",
-  "help",
   "home",
   "load",
   "menu",
