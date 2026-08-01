@@ -179,9 +179,64 @@ Panda component library, and it is why steps 2 and 3 exist at all.
 6. **Export it from `src/index.ts`.** Named export; add a default export in the
    component's own module too, matching the existing pattern.
 
-## Testing — and the one thing worth knowing
+## Testing — two tiers, two failure modes
 
-`npm run gate` runs codegen → typecheck → lint → tests, and is the merge bar.
+| | `npm test` (jest + jsdom) | `npm run test:ct` (Playwright) |
+|---|---|---|
+| **Answers** | props, wiring, ARIA, callbacks, variant resolution | computed styles, layout, overflow, tap targets |
+| **Speed** | ~1s, run on every save | ~5s, run before pushing |
+| **In the gate?** | yes | no — see below |
+
+**jsdom has no layout engine.** Every element reports a zero-sized box, so it
+will agree that a 400px panel fits a 375px screen. Anything about *pixels* is
+unanswerable there, which is why the second tier exists — and why neither
+replaces the other.
+
+`npm run gate` runs codegen → typecheck → lint → jest, and is the merge bar.
+Component tests are a separate command because they need a browser download; run
+them for anything touching layout, sizing or a recipe.
+
+### Component tests run at four viewports
+
+`playwright-ct.config.ts` defines them as projects, so every `*.ct.tsx` runs four
+times. They are boundaries where layout breaks, not popular phones:
+
+- **iphone-se** 375×667 — narrowest screen still in real use, and the one this
+  audience is most likely to hold. Overflow shows up here first.
+- **tablet** 768×1024 — exactly the `md` breakpoint, so it catches an off-by-one
+  a neighbouring width would hide.
+- **laptop** 1280×800 — the `xl` breakpoint and the commonest desktop size.
+- **desktop-wide** 1920×1080 — where max-width and centering bugs appear.
+
+### The harness supplies a reset, and that is a real requirement
+
+`playwright/` holds the mount entry point, a **reset** and a **theme**. All three
+matter, and the second two are requirements this package places on every host:
+
+- **`theme.css`** — all 44 custom properties. A token with no property renders
+  invisible, and an invisible box still has a bounding box, so a layout
+  assertion would pass. A jest test asserts this file stays complete.
+- **`reset.css`** — `box-sizing: border-box`. Without it padding **adds** to
+  width, so `<StyledBox p="4" width="100%">` overflows its parent by 32px. That
+  is not hypothetical: the component tests caught exactly this on their first
+  run, at all four viewports.
+
+**Note the inconsistency:** HopperGuard declares an `@layer reset` in
+`globals.css` and never populates it, so it runs on `content-box` — the
+components were tuned there under different box behaviour than a consumer with a
+conventional reset gets. Documented in the README as a setup requirement.
+
+### Two harness details that exist only to make the above work
+
+- **`outExtension: "js"` in `panda.config.ts`.** TypeScript will downlevel a
+  `.js` file to CommonJS for Jest but *never* a `.mjs` one — the extension forces
+  ESM output whatever `module` says. Panda's default is `.mjs`, and with it every
+  component test dies on `Unexpected token 'export'`, leaving mocking as the only
+  way out — precisely the compromise this package exists to avoid.
+- **`test/` is in the tsconfig `include`.** Solely so
+  `@testing-library/jest-dom`'s module augmentation loads and `tsc` knows about
+  `toBeInTheDocument`. Drop it and the suite runs green while the typecheck fails
+  on every matcher.
 
 **Tests here run against the REAL generated `styled-system`.** The application
 this was extracted from mocks `styled-system/*` wholesale in Jest, which means
@@ -190,18 +245,6 @@ constraint in its PRD-0013. Here the actual generated output is transformed and
 loaded, so recipe behaviour *is* testable. Use that: assert that two variants
 produce different classes, that a token resolves, that `staticCss` covers what
 runtime switching needs.
-
-Two harness details that exist only to make the above work, both load-bearing:
-
-- **`outExtension: "js"` in `panda.config.ts`.** TypeScript will downlevel a
-  `.js` file to CommonJS for Jest but *never* a `.mjs` one — the extension forces
-  ESM output whatever `module` says. Panda's default is `.mjs`, and with it every
-  component test dies on `Unexpected token 'export'`, leaving mocking as the only
-  way out. Consumers are unaffected; they generate their own.
-- **`test/` is in the tsconfig `include`.** Solely so
-  `@testing-library/jest-dom`'s module augmentation loads and `tsc` knows about
-  `toBeInTheDocument`. Drop it and the suite runs green while the typecheck fails
-  on every matcher.
 
 ## What may never land here
 

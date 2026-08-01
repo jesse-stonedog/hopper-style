@@ -33,6 +33,9 @@
     "//pretest": "panda:build, not panda:prepare \u2014 the token-contract suite asserts against the generated stylesheet, which cssgen produces and codegen alone does not.",
     "pretest": "npm run panda:build",
     "test": "jest",
+    "pretest:ct": "npm run panda:build",
+    "test:ct": "playwright test --config playwright-ct.config.ts",
+    "test:ct:ui": "playwright test --config playwright-ct.config.ts --ui",
     "test:coverage": "jest --coverage",
     "gate": "npm run type-check && npm run lint && npm run test",
     "version:bump:patch": "npm version patch --no-git-tag-version",
@@ -49,6 +52,8 @@
   },
   "devDependencies": {
     "@pandacss/dev": "^1.11.1",
+    "@playwright/experimental-ct-react": "^1.62.1",
+    "@playwright/test": "^1.62.1",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.2",
     "@types/jest": "^29.5.14",

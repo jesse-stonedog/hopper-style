@@ -11,3 +11,9 @@ styled-system/
 *.log
 .env
 .env.*
+
+# Playwright
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/

@@ -1,0 +1,58 @@
+/*
+ * Test theme for component tests.
+ *
+ * Every colour token resolves to a bare custom property, so a page that
+ * defines none renders the whole system invisible. These are all 44 — a jest
+ * test asserts the list stays complete, so a token added to the preset fails
+ * the gate here rather than silently rendering nothing in a screenshot.
+ *
+ * Values match the starter theme in the README: dark, and every text/surface
+ * pair clears WCAG AA.
+ */
+:root {
+  --hopper-text-pop-text: #38bdf8;
+  --hopper-text-error-text: #f87171;
+  --hopper-text-warning-text: #fbbf24;
+  --hopper-box-main-text: #f8fafc;
+  --hopper-box-primary-text: #f8fafc;
+  --hopper-box-secondary-text: #f1f5f9;
+  --hopper-box-accent-text: #e2e8f0;
+  --hopper-arrow-primary-bg: #94a3b8;
+  --hopper-arrow-secondary-bg: #64748b;
+  --hopper-arrow-accent-bg: #cbd5e1;
+  --hopper-arrow-primary-border: #475569;
+  --hopper-arrow-secondary-border: #64748b;
+  --hopper-arrow-accent-border: #334155;
+  --hopper-box-main-bg: #0f172a;
+  --hopper-box-primary-bg: #1e293b;
+  --hopper-box-secondary-bg: #334155;
+  --hopper-box-accent-bg: #0b1220;
+  --hopper-box-info-bg: #1e3a5f;
+  --hopper-box-primary-border: #475569;
+  --hopper-box-secondary-border: #64748b;
+  --hopper-box-accent-border: #334155;
+  --hopper-shadow-primary-bg: rgb(0 0 0 / 0.4);
+  --hopper-shadow-secondary-bg: rgb(0 0 0 / 0.3);
+  --hopper-shadow-accent-bg: rgb(0 0 0 / 0.5);
+  --hopper-button-primary-bg: #2563eb;
+  --hopper-button-secondary-bg: #475569;
+  --hopper-button-accent-bg: #1e293b;
+  --hopper-button-primary-hover-bg: #1d4ed8;
+  --hopper-button-secondary-hover-bg: #334155;
+  --hopper-button-accent-hover-bg: #334155;
+  --hopper-button-primary-text: #ffffff;
+  --hopper-button-secondary-text: #f8fafc;
+  --hopper-button-accent-text: #f8fafc;
+  --hopper-button-primary-hover-text: #ffffff;
+  --hopper-button-secondary-hover-text: #ffffff;
+  --hopper-button-accent-hover-text: #ffffff;
+  --hopper-button-plain-bg: transparent;
+  --hopper-button-plain-text: #f8fafc;
+  --hopper-icon-primary-bg: #94a3b8;
+  --hopper-icon-secondary-bg: #64748b;
+  --hopper-icon-accent-bg: #cbd5e1;
+  --hopper-icon-primary-hover-bg: #cbd5e1;
+  --hopper-icon-secondary-hover-bg: #94a3b8;
+  --hopper-icon-accent-hover-bg: #e2e8f0;
+}
+
