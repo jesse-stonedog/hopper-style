@@ -117,6 +117,23 @@ export { createIcon, createIconFromComponent } from "./components/create-icon";
 // ---------------------------------------------------------------------------
 // Overlay
 // ---------------------------------------------------------------------------
+export * from "./components/intent-buttons";
+export { createIntentButton } from "./components/create-intent-button";
+export type { IntentButtonProps, IntentButtonSpec } from "./components/create-intent-button";
+
+export {
+  IntentIconProvider,
+  useIntentIcon,
+  useIntentIcons,
+  missingIntentIcons,
+  ICON_INTENTS,
+} from "./config/intent-icons";
+export type { IconIntent, IntentIcons } from "./config/intent-icons";
+
+export { useDensity } from "./config/style-config";
+export { DENSITY_PROFILES, isDensityProfile } from "./config/types";
+export type { DensityProfile } from "./config/types";
+
 export { default as StyledButton } from "./components/StyledButton";
 export type { StyledButtonProps } from "./components/StyledButton";
 
