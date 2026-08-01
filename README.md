@@ -229,7 +229,7 @@ export function Panel() {
 
 ## Theming
 
-**Two settings** drive the system app-wide, both supplied by your app through
+**Three settings** drive the system app-wide, all supplied by your app through
 the provider:
 
 - `fontSizeProfile` — `xs | sm | md | lg | xl`. The scale is rem-based, so it
@@ -239,6 +239,35 @@ the provider:
 - `variant` — `solid | outline | aurora | glass | matte`. Any call site may
   override it; `useResolvedVariant` applies the precedence (caller → app-wide →
   `solid`) and coerces anything the recipes have no case for.
+- `iconSize` — the default box for every `StyledIcon` that is not given an
+  explicit `size`. Defaults to `2x` (32px), which is large: this library came
+  out of an application built for an often-elderly audience. A conventional web
+  app wants `md` (20px).
+
+### Retuning the scale for your audience
+
+The defaults lean large on purpose, and both halves are host-tunable without
+forking anything:
+
+```tsx
+<HopperStyleProvider fontSizeProfile="md" iconSize="md" variant="solid">
+```
+
+```css
+/* Every fontSizeMap entry is var(--font-sizes-KEY, <large fallback>),
+   so defining the properties replaces the scale wholesale. */
+:root {
+  --font-sizes-sm: 0.875rem;
+  --font-sizes-md: 1rem;
+  --font-sizes-lg: 1.125rem;
+}
+```
+
+**Set the icon size once, at the provider.** Naming a `size` at each call site
+works, but it opts that icon out of ever being retuned — which is how an
+application ends up with three icon scales and no single place to fix them.
+Because an icon set built with `createIcon` names no size of its own, setting
+`iconSize` retunes the entire set at once.
 
 **Your own namespace.** If `--hopper-*` does not suit, rename the whole
 namespace at build time:
@@ -385,8 +414,12 @@ otherwise ignore `size` entirely. Use `createIcon` when you have a node already.
 ### Sizing
 
 `size` accepts `xs`, `sm`, `1x`, `md`, `lg`, `2x`, `xl`, `3x` … `10x` and sets a
-square box in CSS px (`lg` → 24, `2x` → 32, default `2x`). It always wins over a
+square box in CSS px (`md` → 20, `lg` → 24, `2x` → 32). It always wins over a
 height or width in a spread `style` prop, so sizing stays predictable.
+
+Omit it and the app-wide `iconSize` from the provider applies — `2x` unless your
+app says otherwise. Prefer omitting it: see "Retuning the scale for your
+audience" above.
 
 ### Colouring
 

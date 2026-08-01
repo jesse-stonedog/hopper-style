@@ -19,6 +19,7 @@ export {
   HopperStyleProvider,
   useStyleConfig,
   useFontSizeProfile,
+  useIconSize,
   useResolvedVariant,
   DEFAULT_STYLE_CONFIG,
 } from "./config/style-config";
@@ -45,8 +46,10 @@ export {
   ALL_VARIANTS,
   FONT_SIZE_PROFILES,
   FONT_SIZE_KEYS,
+  ICON_SIZES,
   isThemeVariant,
   isFontSizeProfile,
+  isIconSize,
 } from "./config/types";
 export type {
   ThemeVariant,
@@ -55,6 +58,7 @@ export type {
   AllowedTextVariant,
   FontSizeProfile,
   FontSizeKey,
+  IconSize,
 } from "./config/types";
 
 // ---------------------------------------------------------------------------
@@ -104,7 +108,10 @@ export type { StyledHrRuleProps } from "./components/StyledHrRule";
 // Icons — the seam, not the artwork. See the README.
 // ---------------------------------------------------------------------------
 export { default as StyledIcon } from "./components/StyledIcon";
-export type { StyledIconProps, IconSize } from "./components/StyledIcon";
+// `IconSize` is exported above, from `config/types` — it is a config-level
+// vocabulary now that `StyleConfig` names it. `StyledIcon` still re-exports it
+// so the older import path keeps working for consumers.
+export type { StyledIconProps } from "./components/StyledIcon";
 export { createIcon, createIconFromComponent } from "./components/create-icon";
 
 // ---------------------------------------------------------------------------

@@ -64,7 +64,7 @@ src/
     style-config.tsx       HopperStyleProvider / useStyleConfig / useResolvedVariant
     logger.ts              the injectable logger (no-op by default)
     font-size.ts           the rem-based type scale
-    types.ts               variant + font-size vocabularies
+    types.ts               variant + font-size + icon-size vocabularies
   components/              the React components
   index.ts                 the public API
 panda.config.ts            the package's OWN config, so it can test itself
@@ -73,6 +73,34 @@ panda.config.ts            the package's OWN config, so it can test itself
 `config/` is the seam that made this package portable at all. Keep it small:
 **every field added to `StyleConfig` is a field a new host must supply before it
 can render a single button.**
+
+### The defaults lean large, and that is a compatibility promise
+
+This came out of a product for an often-elderly, sometimes cognitively-impaired
+audience, so the shipped defaults are bigger than a conventional web app wants:
+`fontSizeProfile: "md"` is 1.375rem (~22px), and `iconSize: "2x"` is 32px.
+
+**Do not "fix" them.** ~150 call sites in the originating app rely on `2x`, and
+changing a default resizes every icon in every existing consumer with nothing
+failing anywhere — the worst kind of change. A host that wants a standard scale
+sets one, and both halves are host-tunable already:
+
+- **Font size** via the `--font-sizes-*` custom properties, since every
+  `fontSizeMap` entry is `var(--font-sizes-KEY, <fallback>)`.
+- **Icon size** via `iconSize` on `StyleConfig` / `HopperStyleProvider`
+  (NEH-200). `StyledIcon` resolves caller → app-wide → `2x`, the same precedence
+  shape as `useResolvedVariant` and for the same reason: when each call site
+  picks its own default, an app quietly grows several scales at once.
+
+`IconSize` therefore lives in `config/types.ts` rather than beside `StyledIcon` —
+`StyleConfig` names it, and having config import the component that imports
+config would be a cycle. `StyledIcon` re-exports the type so the older import
+path keeps working.
+
+There are now **three consumers** — HopperGuard, `maximus-compliance` (public,
+AGPLv3), and `maximus-cloud-saas` (private). The two Maximus products run
+standard sizing; HopperGuard runs large. A change that suits one must not
+regress the others, which is what the default-pinning tests are guarding.
 
 ## How a consumer wires this up
 
