@@ -1,0 +1,29 @@
+/*
+ * The minimal reset a host must supply.
+ *
+ * hopper-style sets `preflight: false` — it does not impose a reset on its
+ * consumers — so the host owns this. That makes it an UNDOCUMENTED ASSUMPTION
+ * unless it is written down, which is what this file and the README section are
+ * for.
+ *
+ * `box-sizing: border-box` is the one that matters. Without it padding ADDS to
+ * width, so `<StyledBox p="4" width="100%">` is 32px wider than its parent and
+ * overflows. That is not hypothetical: it is what these component tests caught
+ * on their first run, at every viewport.
+ *
+ * NOTE — HopperGuard does not currently apply this. Its globals.css declares an
+ * `@layer reset` and leaves it empty, so the app runs on content-box. The
+ * components were therefore tuned under content-box there, while any consumer
+ * using a conventional reset gets border-box. Tracked separately; these tests
+ * use border-box because it is the ecosystem default and what Panda's own
+ * preflight would emit.
+ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
