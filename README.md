@@ -468,6 +468,97 @@ replacement and impose it on everyone, the artwork was cut out entirely. Your
 licensed set can live in a private package while the components that lay it out
 stay open — which is exactly the arrangement the original app now uses.
 
+## Adopting a component as it is migrated
+
+Components move out of HopperGuard into this package one at a time (NEH-167).
+Each lands as its own release, so consumers adopt on their own schedule rather
+than waiting for a big-bang switch.
+
+### Find out what is available
+
+```bash
+git -C packages/hopper-style log --oneline main   # what has landed
+```
+
+Every migration commit is `feat: migrate StyledX`. The commit body is the real
+changelog: it says what the component does, **what was deliberately left
+behind**, and any prop that was dropped. Read it before adopting — a migration
+is rarely a pure move, because dead props and accessibility gaps get fixed on
+the way through.
+
+### HopperGuard
+
+The app already consumes this package, so adopting a component is a pointer bump
+plus a decision about the local file.
+
+```bash
+git -C packages/hopper-style checkout main && git -C packages/hopper-style pull
+```
+
+Then, for `apps/web/src/app/components/Styled/StyledX.tsx`:
+
+**If the migrated component is a drop-in**, replace the file with a re-export.
+Call sites stay untouched:
+
+```tsx
+export { StyledX as default, StyledX } from "hopper-style";
+export type { StyledXProps } from "hopper-style";
+```
+
+**If the app needs behaviour the shared one deliberately does not have**, keep a
+real wrapper that delegates. `StyledSpinner` is the worked example: the shared
+one has no `spinLogo`, because a brand mark is not a primitive, so the app keeps
+a component that renders its logo and falls through to the shared spinner
+otherwise. That is not a shim — it is an app-level extension, and it should not
+pretend to be one.
+
+Then two PRs, in this order — the submodule pointer must be on `main` before the
+app can resolve it:
+
+1. **hopperguard** — bump the `packages/hopper-style` gitlink.
+2. **hopper-web** — swap the local file.
+3. **hopperguard** — bump the `apps/web` gitlink.
+
+### maximus-compliance / maximus-cloud-saas
+
+Nothing to unpick — these have no local copy to replace. Take the dependency
+(see Install), then import:
+
+```tsx
+import { StyledSpinner } from "hopper-style";
+```
+
+`maximus-compliance` is public and AGPLv3 and ships a public Docker image, so it
+uses a **permissive icon set** through the icon seam rather than the private
+Font Awesome package. Everything else is shared.
+
+### Verify — the three checks that actually catch things
+
+Learned the hard way; each one corresponds to a real bug that reached `main`.
+
+1. **Type-check on a real `npm install`.** Not a symlinked `node_modules` from
+   another checkout — a stale copy there resolves to the wrong package and hides
+   dependency-graph breakage entirely. The unit tier cannot substitute: a missing
+   export is a *type* error, and jest does not type-check.
+2. **Look at it at 375px.** Layout regressions surface on the narrowest screen
+   first, and jsdom has no layout engine, so no unit test will tell you.
+3. **Read the migration commit for dropped props.** A prop removed upstream is
+   a type error at the call site — good. A prop that was *always* silently
+   ignored (`thickness`, `speed`, `color`, `emptyColor`, `logoSize` on the
+   spinner) is not, and its removal is a no-op you can adopt safely.
+
+### If the component changed shape
+
+Migrations fix things on the way through, so behaviour is occasionally
+intentionally different. When it is, the commit says so explicitly. Two patterns
+so far:
+
+- **A prop was dropped because it never worked.** Adopt freely; nothing rendered
+  differently.
+- **An accessibility gap was closed.** `StyledSpinner` gained `role="status"`, so
+  screen readers now announce it. Nothing visual changes, but a test asserting
+  the old silence will fail, and it should.
+
 ## Development
 
 ```bash
