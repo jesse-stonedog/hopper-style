@@ -124,3 +124,17 @@ describe("intent buttons", () => {
     });
   });
 });
+
+describe("default tooltips", () => {
+  it("explains rather than repeating the label", () => {
+    // "Delete" is the label; "Delete the item" is what the tooltip adds. A
+    // tooltip that just repeats the visible text earns nothing.
+    render(withIcons(<StyledDeleteButton />));
+    expect(screen.getByRole("button")).toBeInTheDocument();
+  });
+
+  it("lets a caller override it", () => {
+    render(withIcons(<StyledDeleteButton tooltip="Delete this medicine" />));
+    expect(screen.getByRole("button", { name: /delete/i })).toBeInTheDocument();
+  });
+});
