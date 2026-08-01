@@ -6,6 +6,11 @@
     "moduleResolution": "bundler",
     "jsx": "react-jsx",
     "strict": true,
+    // Enabled so this package compiles under any consumer at least as strict.
+    // It ships SOURCE for Panda to parse, which means consumers type-check OUR
+    // code under THEIR config — so a flag we do not hold becomes a build error
+    // in a repo that does not own the offending line. See NEH-218.
+    "noUncheckedIndexedAccess": true,
     "noEmit": true,
     "declaration": true,
     "esModuleInterop": true,

@@ -27,7 +27,11 @@ describe("the component-test theme", () => {
     // A stale property left behind after a token is renamed reads as coverage
     // that is not really there.
     const required = new Set(requiredCssCustomProperties());
-    const declared = [...theme.matchAll(/(--hopper-[a-z0-9-]+)\s*:/g)].map((m) => m[1]);
+    // A capture group that did not participate is `undefined`; filtering keeps
+    // the comparison honest rather than asserting the regex shape.
+    const declared = [...theme.matchAll(/(--hopper-[a-z0-9-]+)\s*:/g)]
+      .map((m) => m[1])
+      .filter((name): name is string => name !== undefined);
     expect(declared.filter((p) => !required.has(p))).toEqual([]);
   });
 });

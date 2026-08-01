@@ -96,8 +96,15 @@ describe("the font-size scale", () => {
     const sizes = Object.keys(fontSizeMap).map((k) =>
       parseFloat(getFontSizeValue(k)),
     );
-    for (let i = 1; i < sizes.length; i++) {
-      expect(sizes[i]).toBeGreaterThan(sizes[i - 1]);
+    // Pairwise, so each element is read once and narrowed. Indexing twice per
+    // iteration under noUncheckedIndexedAccess needs two assertions, and an
+    // assertion in a test is a place a real regression can hide.
+    for (let i = 1; i < sizes.length; i += 1) {
+      const previous = sizes[i - 1];
+      const current = sizes[i];
+      expect(previous).toBeDefined();
+      expect(current).toBeDefined();
+      expect(current as number).toBeGreaterThan(previous as number);
     }
   });
 

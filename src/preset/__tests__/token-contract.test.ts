@@ -136,6 +136,10 @@ describe("the preset", () => {
     const colors = preset.theme?.extend?.tokens?.colors as
       | Record<string, { value: string }>
       | undefined;
-    expect(colors?.boxBgPrimary.value).toBe("var(--maximus-box-primary-bg)");
+    // Asserting the token EXISTS before reading it: `colors?.x.value` would
+    // throw rather than fail helpfully if the prefix option stopped threading
+    // through and the token vanished.
+    expect(colors?.boxBgPrimary).toBeDefined();
+    expect(colors?.boxBgPrimary?.value).toBe("var(--maximus-box-primary-bg)");
   });
 });

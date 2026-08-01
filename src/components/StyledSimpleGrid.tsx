@@ -35,8 +35,13 @@ function resolveResponsiveColumns(
 ): number {
   const ordered = ["xl", "lg", "md", "sm", "base"] as const;
   for (const bp of ordered) {
-    if (columns[bp] !== undefined && windowWidth >= BREAKPOINTS[bp]) {
-      return columns[bp]!;
+    // Read once and narrow, rather than testing then re-indexing with `!`. The
+    // non-null assertion was hiding the fact that BREAKPOINTS[bp] is also an
+    // indexed read and equally unchecked.
+    const columnsAtBreakpoint = columns[bp];
+    const minimumWidth = BREAKPOINTS[bp];
+    if (columnsAtBreakpoint !== undefined && minimumWidth !== undefined) {
+      if (windowWidth >= minimumWidth) return columnsAtBreakpoint;
     }
   }
   return columns.base ?? 1;
