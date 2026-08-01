@@ -116,6 +116,22 @@ export function isFontSizeProfile(value: unknown): value is FontSizeProfile {
   return FONT_SIZE_PROFILES.includes(value as FontSizeProfile);
 }
 
+/**
+ * How tightly the UI packs. A user preference, not a viewport thing — someone
+ * with limited dexterity picks `comfortable` on a phone, and someone managing a
+ * dense list picks `compact` on a desktop.
+ *
+ * It changes more than padding: at `compact` the intent buttons drop their
+ * text label and show only their icon, which is why the shared components need
+ * to know about it rather than the host handling it alone.
+ */
+export const DENSITY_PROFILES = ["compact", "normal", "comfortable"] as const;
+export type DensityProfile = (typeof DENSITY_PROFILES)[number];
+
+export function isDensityProfile(value: unknown): value is DensityProfile {
+  return DENSITY_PROFILES.includes(value as DensityProfile);
+}
+
 export function isIconSize(value: unknown): value is IconSize {
   return ICON_SIZES.includes(value as IconSize);
 }

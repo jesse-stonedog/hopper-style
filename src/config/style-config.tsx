@@ -1,8 +1,9 @@
 "use client";
 
 import React, { createContext, useContext, useMemo } from "react";
-import type { FontSizeProfile, IconSize, ThemeVariant } from "./types";
+import type { DensityProfile, FontSizeProfile, IconSize, ThemeVariant } from "./types";
 import { THEME_VARIANTS } from "./types";
+import { IntentIconProvider, type IntentIcons } from "./intent-icons";
 
 /**
  * Everything this component library needs to know about the host application.
@@ -29,6 +30,15 @@ export interface StyleConfig {
    * see `useResolvedVariant` for the precedence rule.
    */
   variant: ThemeVariant;
+
+  /**
+   * How tightly the UI packs.
+   *
+   * Not cosmetic: at `compact` the intent buttons drop their text label and
+   * show only their icon, so this changes what a control *says*, not just its
+   * padding. That is why it lives here rather than being left to CSS.
+   */
+  density: DensityProfile;
 
   /**
    * The app-wide default icon size, used by any `StyledIcon` that is not given
@@ -59,6 +69,7 @@ export interface StyleConfig {
 export const DEFAULT_STYLE_CONFIG: StyleConfig = {
   fontSizeProfile: "md",
   variant: "solid",
+  density: "normal",
   // Not the middle of the scale, unlike the two above: this one is pinned to
   // what the originating application already renders. Changing it would be an
   // invisible, app-wide visual change to every existing consumer.
@@ -69,6 +80,13 @@ const StyleConfigContext = createContext<StyleConfig>(DEFAULT_STYLE_CONFIG);
 
 export interface HopperStyleProviderProps extends Partial<StyleConfig> {
   children: React.ReactNode;
+  /**
+   * Which icon to draw for each intent — see `config/intent-icons.tsx`.
+   *
+   * This is how one `StyledDeleteButton` serves a Font Awesome product and a
+   * Lucide one. Optional: an unregistered intent simply renders no icon.
+   */
+  icons?: IntentIcons;
 }
 
 /**
@@ -93,6 +111,8 @@ export function HopperStyleProvider({
   fontSizeProfile,
   variant,
   iconSize,
+  density,
+  icons,
 }: HopperStyleProviderProps) {
   const value = useMemo<StyleConfig>(
     () => ({
@@ -100,13 +120,19 @@ export function HopperStyleProvider({
         fontSizeProfile ?? DEFAULT_STYLE_CONFIG.fontSizeProfile,
       variant: variant ?? DEFAULT_STYLE_CONFIG.variant,
       iconSize: iconSize ?? DEFAULT_STYLE_CONFIG.iconSize,
+      density: density ?? DEFAULT_STYLE_CONFIG.density,
     }),
-    [fontSizeProfile, variant, iconSize],
+    [fontSizeProfile, variant, iconSize, density],
   );
 
   return (
     <StyleConfigContext.Provider value={value}>
-      {children}
+      {/*
+        The icon registry rides along with the style config so a host wires up
+        one provider, not two — and so the intent buttons cannot end up inside
+        a styled tree with no icons registered.
+      */}
+      <IntentIconProvider icons={icons ?? {}}>{children}</IntentIconProvider>
     </StyleConfigContext.Provider>
   );
 }
@@ -148,4 +174,9 @@ export function useResolvedVariant(variant?: string): ThemeVariant {
   return THEME_VARIANTS.includes(candidate as ThemeVariant)
     ? (candidate as ThemeVariant)
     : "solid";
+}
+
+/** How tightly the UI packs. `compact` makes intent buttons icon-only. */
+export function useDensity(): DensityProfile {
+  return useStyleConfig().density;
 }
