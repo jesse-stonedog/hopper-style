@@ -57,8 +57,11 @@ export function getFontSizeValue(size: string): string {
     return "unknown";
   }
   const parts = sizeString.split(",");
-  if (parts.length > 1) {
-    return parts[1].replace(")", "").trim();
+  // `parts.length > 1` does not narrow `parts[1]` under noUncheckedIndexedAccess,
+  // and destructuring says what we actually mean: take the fallback if there is one.
+  const [, fallback] = parts;
+  if (fallback !== undefined) {
+    return fallback.replace(")", "").trim();
   }
   return sizeString;
 }
@@ -84,7 +87,9 @@ export const FONT_SIZE_ORDER: readonly FontSizeKey[] = [
 export function stepUpFontSize(size: FontSizeKey, steps = 1): FontSizeKey {
   const index = FONT_SIZE_ORDER.indexOf(size);
   if (index === -1) return size;
-  return FONT_SIZE_ORDER[
-    Math.min(index + steps, FONT_SIZE_ORDER.length - 1)
-  ];
+  const next = FONT_SIZE_ORDER[Math.min(index + steps, FONT_SIZE_ORDER.length - 1)];
+  // The index is clamped into range, so this cannot miss — but returning `size`
+  // rather than asserting keeps the function total, and a future change to the
+  // clamp fails safe instead of returning undefined to a caller typed otherwise.
+  return next ?? size;
 }
