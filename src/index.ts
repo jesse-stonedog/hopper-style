@@ -117,6 +117,9 @@ export { createIcon, createIconFromComponent } from "./components/create-icon";
 // ---------------------------------------------------------------------------
 // Overlay
 // ---------------------------------------------------------------------------
+export { default as StyledButton } from "./components/StyledButton";
+export type { StyledButtonProps } from "./components/StyledButton";
+
 export { default as StyledSpinner } from "./components/StyledSpinner";
 export type { StyledSpinnerProps } from "./components/StyledSpinner";
 
