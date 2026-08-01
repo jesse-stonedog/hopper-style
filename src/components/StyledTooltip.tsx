@@ -1,7 +1,7 @@
 "use client";
 
 import { log } from "../config/logger";
-import React, { useRef, useState, useLayoutEffect } from "react";
+import React, { useRef, useState, useLayoutEffect, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { styled } from "styled-system/jsx";
 import StyledText from "./StyledText";
@@ -18,6 +18,41 @@ const TooltipTrigger = styled("div", {
 });
 
 const TooltipContent = styled("div");
+
+/**
+ * The click-mode affordance.
+ *
+ * In click mode the tooltip cannot be opened by clicking the wrapper, because
+ * the wrapper usually contains a button and that click belongs to the button.
+ * So click mode renders this next to the child: a separate, visible, focusable
+ * control whose only job is to reveal the explanation. The reader can see that
+ * there is help, and where to press for it, without discovering that pressing
+ * the thing itself does something else entirely.
+ *
+ * Deliberately not `StyledButton` — that imports this module, and a cycle
+ * between two components that render each other is a module-init hazard for
+ * every consumer. Layout only, no colours, per the package rule.
+ */
+const HelpTrigger = styled("button", {
+  base: {
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    // 48 rather than the WCAG 2.5.5 floor of 44: this component is used by
+    // applications whose readers are frequently older, and a help control that
+    // is hard to hit is a help control that does not get used.
+    minWidth: "48px",
+    minHeight: "48px",
+    marginLeft: "4px",
+    borderRadius: "9999px",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    cursor: "pointer",
+    fontWeight: "bold",
+    lineHeight: "1",
+    verticalAlign: "middle",
+  },
+});
 
 /**
  * Everything the browser already puts in the tab sequence, plus anything given
@@ -44,6 +79,26 @@ export interface StyledTooltipProps {
   "aria-label"?: string;
   variant?: AllowedVariant;
   style?: React.CSSProperties;
+  /**
+   * How the tooltip opens.
+   *
+   * `"hover"` (the default, and what an unset value means) preserves the
+   * long-standing behaviour: reveal on hover or focus, hide on leave or blur.
+   *
+   * `"click"` renders a separate help control beside the child and opens only
+   * when that control is pressed. Hover does nothing at all. This exists for
+   * readers whose pointer drifts — a hover tooltip closes itself before they
+   * arrive, and a hover tooltip they *are* reading vanishes when their hand
+   * moves. Hosts typically wire this to a user preference rather than setting
+   * it per call site.
+   */
+  trigger?: "hover" | "click";
+  /**
+   * Accessible name for the click-mode help control. Defaults to
+   * "More information". Give it something specific where the surrounding
+   * context does not already make the subject obvious.
+   */
+  helpLabel?: string;
 }
 
 const StyledTooltip: React.FC<StyledTooltipProps> = ({
@@ -54,6 +109,8 @@ const StyledTooltip: React.FC<StyledTooltipProps> = ({
   size = "md",
   "aria-label": ariaLabel,
   variant,
+  trigger = "hover",
+  helpLabel = "More information",
   ...rest
 }) => {
   // Caller's variant, else the app-wide one, else `solid` — and anything the
@@ -74,6 +131,8 @@ const StyledTooltip: React.FC<StyledTooltipProps> = ({
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const triggerRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
+  const helpRef = useRef<HTMLButtonElement>(null);
+  const isClick = trigger === "click";
 
   // The child may be any component (StyledIconButton, a link, a bare span), so
   // whether it is focusable can only be known from the rendered DOM — React
@@ -198,6 +257,35 @@ const StyledTooltip: React.FC<StyledTooltipProps> = ({
     }
   }, [visible, placement]);
 
+  // Click mode owns its own dismissal. Hover mode needs none of this: it
+  // closes when the pointer leaves. A panel opened by a deliberate press has
+  // to be closable by a deliberate action, and Escape has to work, or a
+  // keyboard user is stuck with it open.
+  useEffect(() => {
+    if (!isClick || !visible || typeof document === "undefined") return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setVisible(false);
+      // Focus goes back to what opened it — never to the top of the document.
+      helpRef.current?.focus();
+    };
+    const onPointerDown = (event: MouseEvent) => {
+      const target = event.target as Node;
+      // A press inside the tooltip is not a dismissal: the explanation may
+      // contain a link, and text worth selecting.
+      if (helpRef.current?.contains(target) || tooltipRef.current?.contains(target)) return;
+      setVisible(false);
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+    document.addEventListener("mousedown", onPointerDown);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("mousedown", onPointerDown);
+    };
+  }, [isClick, visible]);
+
   if (!tooltip) {
     return <>{children}</>;
   }
@@ -223,7 +311,7 @@ const StyledTooltip: React.FC<StyledTooltipProps> = ({
         // tooltip still fires without the wrapper taking focus itself. Adding
         // tabIndex here regardless is what gave every tooltipped control two
         // tab stops, the second of them silent (NEH-127).
-        tabIndex={hasFocusableChild ? undefined : 0}
+        tabIndex={isClick || hasFocusableChild ? undefined : 0}
         // A focusable element needs a role and a name (WCAG 2.2 4.1.2). Applied
         // only when the trigger keeps the tab stop AND nothing else names it —
         // see needsFallbackName above for why the condition matters (NEH-151).
@@ -232,22 +320,36 @@ const StyledTooltip: React.FC<StyledTooltipProps> = ({
         // reveals content on focus, which is the closest standard role and what
         // the ARIA tooltip pattern assumes of a trigger. A focusable generic
         // with only a name still fails 4.1.2, which asks for both.
-        role={!hasFocusableChild && needsFallbackName ? "button" : undefined}
+        role={!isClick && !hasFocusableChild && needsFallbackName ? "button" : undefined}
         aria-label={
-          hasFocusableChild
+          isClick || hasFocusableChild
             ? undefined
             : ariaLabel ?? (needsFallbackName ? tooltipLabel : undefined)
         }
-        onMouseEnter={show}
-        onMouseLeave={hide}
-        onFocus={show}
-        onBlur={hide}
+        // Hover handlers exist only in hover mode. In click mode a drifting
+        // pointer must change nothing at all — that is the entire point.
+        onMouseEnter={isClick ? undefined : show}
+        onMouseLeave={isClick ? undefined : hide}
+        onFocus={isClick ? undefined : show}
+        onBlur={isClick ? undefined : hide}
         aria-describedby={
-          !hasFocusableChild && visible ? tooltipId : undefined
+          !isClick && !hasFocusableChild && visible ? tooltipId : undefined
         }
         {...rest}
       >
         {children}
+        {isClick && (
+          <HelpTrigger
+            ref={helpRef}
+            type="button"
+            aria-label={helpLabel}
+            aria-expanded={visible}
+            aria-controls={visible ? tooltipId : undefined}
+            onClick={() => setVisible((open) => !open)}
+          >
+            ?
+          </HelpTrigger>
+        )}
       </TooltipTrigger>
       {visible && typeof document !== "undefined" &&
         createPortal(
@@ -269,8 +371,8 @@ const StyledTooltip: React.FC<StyledTooltipProps> = ({
               pointerEvents: "auto",
               zIndex: 200000,
             }}
-            onMouseEnter={show}
-            onMouseLeave={hide}
+            onMouseEnter={isClick ? undefined : show}
+            onMouseLeave={isClick ? undefined : hide}
           >
             <StyledText size={size}>{tooltip}</StyledText>
           </TooltipContent>,
