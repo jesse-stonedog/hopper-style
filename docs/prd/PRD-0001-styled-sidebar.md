@@ -1,6 +1,6 @@
 # PRD-0001 — StyledSidebar
 
-**Status:** Draft · **Owner:** eng · **Component:** `StyledSidebar`
+**Status:** Shipped (component) · **Owner:** eng · **Component:** `StyledSidebar`
 **Risk:** Medium — this becomes the primary navigation for applications whose users are often elderly and sometimes cognitively impaired. The failure mode is not a crash; it is a person who cannot find the thing they were looking for and stops trying.
 
 > This repository is public and Apache-2.0. This document specifies a **library
@@ -157,7 +157,7 @@ Binding, not aspirational:
 ## Rollout
 
 1. ~~Extend `StyledTooltip` with a click trigger~~ — **done**: `trigger="click"` with its own help control.
-2. Build `StyledSidebar` against this API, with tests.
+2. ~~Build `StyledSidebar` against this API, with tests~~ — **done**.
 3. The reference consumer adopts it behind its existing navigation, then switches over.
 
 Nothing here is breaking: this is a new component.
