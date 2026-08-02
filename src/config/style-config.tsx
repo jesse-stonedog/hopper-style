@@ -180,13 +180,33 @@ export function useIconSize(): IconSize {
  * written by an older release). Coercing to `solid` renders a plain control;
  * passing it through renders an *unstyled* one, because a recipe silently emits
  * nothing for a variant it does not define.
+ *
+ * ## Pass `allowed` when your recipe defines more than the theme five
+ *
+ * The default list is the five appearances a user can select app-wide, and for
+ * most controls that is the right gate. But some recipes define extras that are
+ * reachable per-call-site and not offerable globally — `inputBoolRecipe` has
+ * `ghost` and `none`. Narrowing those to `solid` is silent: the control renders,
+ * it just quietly ignores what the call site asked for.
+ *
+ * That is not hypothetical. Migrating `StyledInputBool` into this package with
+ * the default list dropped `variant="ghost"` on the floor, and nothing failed
+ * except one test in the consuming app that happened to assert it.
+ *
+ * `allowed` must contain `"solid"`, since that is the fallback.
  */
-export function useResolvedVariant(variant?: string): ThemeVariant {
+export function useResolvedVariant(variant?: string): ThemeVariant;
+export function useResolvedVariant<T extends string>(
+  variant: string | undefined,
+  allowed: readonly T[],
+): T;
+export function useResolvedVariant(
+  variant?: string,
+  allowed: readonly string[] = THEME_VARIANTS,
+): string {
   const globalVariant = useStyleConfig().variant;
   const candidate = variant ?? globalVariant;
-  return THEME_VARIANTS.includes(candidate as ThemeVariant)
-    ? (candidate as ThemeVariant)
-    : "solid";
+  return allowed.includes(candidate) ? candidate : "solid";
 }
 
 /** How tightly the UI packs. `compact` makes intent buttons icon-only. */

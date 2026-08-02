@@ -147,3 +147,16 @@ export type { StyledSpinnerProps } from "./components/StyledSpinner";
 
 export { default as StyledTooltip } from "./components/StyledTooltip";
 export type { StyledTooltipProps } from "./components/StyledTooltip";
+
+// ---------------------------------------------------------------------------
+// Form controls
+// ---------------------------------------------------------------------------
+export { default as StyledFormLabel } from "./components/StyledFormLabel";
+export type { StyledFormLabelProps } from "./components/StyledFormLabel";
+
+export { default as StyledInputBool } from "./components/StyledInputBool";
+export type { StyledInputBoolProps, InputBoolVariant } from "./components/StyledInputBool";
+export { INPUT_BOOL_VARIANTS } from "./components/StyledInputBool";
+
+export { default as StyledInputSlider } from "./components/StyledInputSlider";
+export type { StyledInputSliderProps } from "./components/StyledInputSlider";
