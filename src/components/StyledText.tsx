@@ -14,17 +14,17 @@ const PandaText = styled("span", textRecipe);
 
 export interface StyledTextProps
   extends React.ComponentProps<typeof PandaText> {
-  children?: React.ReactNode;
+  children?: React.ReactNode | undefined;
 
-  tooltip?: React.ReactNode;
-  as?: React.ElementType; // Explicitly add the 'as' prop
-  size?: keyof typeof fontSizeMap;
-  fixedSize?: boolean;
-  color?: string;
-  ellipsis?: boolean;
-  wrap?: boolean;
+  tooltip?: React.ReactNode | undefined;
+  as?: React.ElementType | undefined; // Explicitly add the 'as' prop
+  size?: keyof typeof fontSizeMap | undefined;
+  fixedSize?: boolean | undefined;
+  color?: string | undefined;
+  ellipsis?: boolean | undefined;
+  wrap?: boolean | undefined;
 
-  variant?: AllowedTextVariant;
+  variant?: AllowedTextVariant | undefined;
 }
 
 const StyledText = React.forwardRef<HTMLSpanElement, StyledTextProps>((props, ref) => {

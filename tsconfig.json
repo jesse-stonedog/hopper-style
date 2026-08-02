@@ -11,6 +11,7 @@
     // code under THEIR config — so a flag we do not hold becomes a build error
     // in a repo that does not own the offending line. See NEH-218.
     "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
     "noEmit": true,
     "declaration": true,
     "esModuleInterop": true,

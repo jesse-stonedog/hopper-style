@@ -72,13 +72,13 @@ const FOCUSABLE_SELECTOR = [
 export interface StyledTooltipProps {
   tooltip: React.ReactNode;
   children: React.ReactNode;
-  delay?: number;
-  placement?: "top" | "bottom" | "left" | "right";
-  boxBgAccent?: string; // theme color or fallback
-  size?: string;
+  delay?: number | undefined;
+  placement?: "top" | "bottom" | "left" | "right" | undefined;
+  boxBgAccent?: string | undefined; // theme color or fallback
+  size?: string | undefined;
   "aria-label"?: string;
-  variant?: AllowedVariant;
-  style?: React.CSSProperties;
+  variant?: AllowedVariant | undefined;
+  style?: React.CSSProperties | undefined;
   /**
    * How the tooltip opens.
    *
@@ -92,13 +92,13 @@ export interface StyledTooltipProps {
    * moves. Hosts typically wire this to a user preference rather than setting
    * it per call site.
    */
-  trigger?: "hover" | "click";
+  trigger?: "hover" | "click" | undefined;
   /**
    * Accessible name for the click-mode help control. Defaults to
    * "More information". Give it something specific where the surrounding
    * context does not already make the subject obvious.
    */
-  helpLabel?: string;
+  helpLabel?: string | undefined;
 }
 
 const StyledTooltip: React.FC<StyledTooltipProps> = ({
