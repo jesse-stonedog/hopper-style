@@ -13,35 +13,69 @@ const icon = (
 );
 
 test.describe("tap target", () => {
-  // KNOWN FAILING — NEH-220, same root cause as StyledButton: the recipe sets
-  // no minimum, so the box is whatever padding plus a 16px icon produces. An
-  // icon button is the WORST case for this, because it has no text to prop the
-  // box open — and it is the control most often used for destructive actions.
-  test.fail();
+  // Was NEH-220, same root cause as StyledButton: the recipe set no minimum, so
+  // the box was whatever padding plus a 16px icon produced. An icon button is
+  // the WORST case for it, having no text to prop the box open — and it is the
+  // control most often used for destructive actions.
+  //
+  // `buttonIconRecipe` now states the floor on its BASE, so the `size` variants
+  // shrink the glyph and the padding but never the hit area.
 
-  test("meets the 44x44 CSS px floor", async ({ mount }) => {
+  test("meets the 48x48 CSS px floor", async ({ mount }) => {
     const component = await mount(
       <StyledIconButton aria-label="Delete">{icon}</StyledIconButton>,
     );
     const box = (await component.boundingBox())!;
-    expect(box.height).toBeGreaterThanOrEqual(44);
-    expect(box.width).toBeGreaterThanOrEqual(44);
+    expect(box.height).toBeGreaterThanOrEqual(48);
+    expect(box.width).toBeGreaterThanOrEqual(48);
   });
 });
 
 test.describe("sizes", () => {
-  test("grow monotonically", async ({ mount }) => {
-    // Four size variants that must actually differ — a size prop that maps two
-    // names to the same box is a silently broken knob.
-    const seen: number[] = [];
+  /**
+   * `size` scales the GLYPH, not the hit area — a change of meaning (NEH-251).
+   *
+   * It used to scale the box, and the old test here asserted exactly that: the
+   * four variants had to produce at least two distinct heights, because "a size
+   * prop that maps two names to the same box is a silently broken knob."
+   *
+   * That was right while the box was the target. Now `buttonIconRecipe` states
+   * a 48px floor on its base, so every variant clamps to 48 and the box can no
+   * longer carry the distinction. Keeping the old assertion would have meant
+   * exempting `1x` and `sm` from the floor — which is precisely the sub-48
+   * target the floor exists to eliminate, and on the control most often used
+   * for destructive actions.
+   *
+   * So the knob still works, it just moved: padding and font-size shrink, the
+   * hit area does not. Both halves are asserted, because either alone is
+   * satisfiable by a broken implementation — a constant box with a constant
+   * glyph passes "the target is big enough", and a growing glyph with a growing
+   * box passes "the knob does something".
+   */
+  test("scale the glyph while the hit area stays put", async ({ mount }) => {
+    const measured: { size: string; height: number; font: number }[] = [];
     for (const size of ["1x", "sm", "md", "lg"] as const) {
       const c = await mount(
         <StyledIconButton size={size} aria-label="Go">{icon}</StyledIconButton>,
       );
-      seen.push((await c.boundingBox())!.height);
+      measured.push({
+        size,
+        height: (await c.boundingBox())!.height,
+        font: await c.evaluate((el) => parseFloat(getComputedStyle(el).fontSize)),
+      });
       await c.unmount();
     }
-    expect(new Set(seen).size).toBeGreaterThan(1);
+
+    // The knob does something: at least two distinct glyph sizes.
+    const fonts = measured.map((m) => m.font);
+    expect(new Set(fonts).size).toBeGreaterThan(1);
+    // ...and it only ever grows.
+    expect(fonts).toEqual([...fonts].sort((a, b) => a - b));
+
+    // The target never shrinks below the floor, at any size, at any viewport.
+    for (const m of measured) {
+      expect(m.height, `size="${m.size}" fell under the floor`).toBeGreaterThanOrEqual(48);
+    }
   });
 });
 

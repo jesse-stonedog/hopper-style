@@ -7,14 +7,14 @@ import { ToggleHarness } from "./StyledInputToggle.harness";
  */
 
 test.describe("StyledInputToggle", () => {
-  test("meets the 44x44 tap-target floor", async ({ mount }) => {
-    // It was 60x30 against a 44x44 minimum (WCAG 2.5.5). The button pads out
+  test("meets the 48x48 tap-target floor", async ({ mount }) => {
+    // It was 60x30 against the 48x48 house minimum. The button pads out
     // around the track rather than the track growing, so this passes without
     // the switch looking any different.
     const component = await mount(<ToggleHarness />);
     const box = await component.getByTestId("toggle-switch").boundingBox();
-    expect(box!.width).toBeGreaterThanOrEqual(44);
-    expect(box!.height).toBeGreaterThanOrEqual(44);
+    expect(box!.width).toBeGreaterThanOrEqual(48);
+    expect(box!.height).toBeGreaterThanOrEqual(48);
   });
 
   test("the visible track still reads as a switch", async ({ mount }) => {

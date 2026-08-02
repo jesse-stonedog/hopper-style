@@ -11,7 +11,7 @@ import { DictationField, ProfiledFields } from "./StyledInputText.harness";
  * "enough" is the only part that matters to someone reading their own dictated
  * text.
  *
- * Runs at all four viewports. The narrow one is where a 44px button inside a
+ * Runs at all four viewports. The narrow one is where a 48px button inside a
  * 375px-wide field stops leaving room for anything else.
  */
 
@@ -22,14 +22,14 @@ const FIELDS = [
 
 for (const { name, multiline } of FIELDS) {
   test.describe(`dictation controls — ${name}`, () => {
-    test("the mic meets the 44x44 target floor", async ({ mount }) => {
+    test("the mic meets the 48x48 target floor", async ({ mount }) => {
       // WCAG 2.5.5. These sit inside a field, where the temptation is to shrink
       // them so they do not crowd the text; the field pads itself instead.
       const component = await mount(<DictationField multiline={multiline} />);
       const box = await component.getByTestId("dictation-mic").boundingBox();
       expect(box).not.toBeNull();
-      expect(box!.width).toBeGreaterThanOrEqual(44);
-      expect(box!.height).toBeGreaterThanOrEqual(44);
+      expect(box!.width).toBeGreaterThanOrEqual(48);
+      expect(box!.height).toBeGreaterThanOrEqual(48);
     });
 
     test("the mic sits inside the field, not beside it", async ({ mount }) => {
@@ -125,6 +125,8 @@ for (const { name, multiline } of FIELDS) {
         .getByTestId("field")
         .evaluate((el) => parseFloat(getComputedStyle(el).paddingRight));
       // Whatever the recipe's own padding is, it is nowhere near button-sized.
+      // Bound left at 44 rather than raised with the floor: it only has to be
+      // well below a button, and the stricter number keeps saying that.
       expect(padding).toBeLessThan(44);
     });
 

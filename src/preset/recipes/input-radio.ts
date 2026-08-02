@@ -13,7 +13,7 @@ export const inputRadioRootRecipe = defineSlotRecipe({
       cursor: "pointer",
       padding: "var(--panda-density-padding, 8px)",
       margin: "var(--panda-density-margin, 8px)",
-      minHeight: "44px",
+      minHeight: "48px",
       borderRadius: "md",
       borderWidth: "1px",
       borderColor: "transparent",

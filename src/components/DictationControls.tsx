@@ -55,8 +55,8 @@ const ControlButton = styled("button", {
     justifyContent: "center",
     // WCAG 2.5.5. Non-negotiable even though these live inside a field —
     // the field pads itself to make room rather than shrinking them.
-    minWidth: "44px",
-    minHeight: "44px",
+    minWidth: "48px",
+    minHeight: "48px",
     background: "transparent",
     border: "none",
     padding: "0.25em",

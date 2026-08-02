@@ -2,14 +2,14 @@ import { test, expect } from "@playwright/experimental-ct-react";
 import { RadioHarness } from "./StyledInputRadio.harness";
 
 test.describe("StyledInputRadio", () => {
-  test("each option clears the 44px target floor", async ({ mount }) => {
+  test("each option clears the 48px target floor", async ({ mount }) => {
     // The label is the target, not the 13px dot inside it — which is what
     // wrapping the input in a <label> buys.
     const component = await mount(<RadioHarness />);
     const labels = component.locator("label");
     for (const box of await labels.all()) {
       const rect = await box.boundingBox();
-      expect(rect!.height).toBeGreaterThanOrEqual(44);
+      expect(rect!.height).toBeGreaterThanOrEqual(48);
     }
   });
 

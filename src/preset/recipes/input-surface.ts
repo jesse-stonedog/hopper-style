@@ -34,7 +34,7 @@ export const inputSurfaceBase = {
   padding:
     "calc(var(--panda-density-padding, 8px) + 4px) calc(var(--panda-density-padding, 8px) + 8px)",
   margin: 0,
-  minHeight: "44px",
+  minHeight: "48px",
   fontSize: "var(--font-sizes-xl, 1.25rem)",
   transition: "box-shadow 0.2s, border-color 0.2s",
   // A token, not `black`: the base has to be legible on whatever the variant

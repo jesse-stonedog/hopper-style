@@ -17,7 +17,7 @@ test.describe("StyledInputSlider", () => {
     );
     const track = await component.locator("input[type='range']").boundingBox();
     expect(track).not.toBeNull();
-    expect(track!.width).toBeGreaterThan(44);
+    expect(track!.width).toBeGreaterThan(48);
   });
 
   test("the row does not overflow the viewport", async ({ mount, page }) => {

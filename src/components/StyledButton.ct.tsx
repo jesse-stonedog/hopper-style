@@ -10,26 +10,24 @@ import StyledBox from "./StyledBox";
  */
 
 test.describe("tap target", () => {
-  // KNOWN FAILING — NEH-220. `buttonRecipe` sets no min-height, so a short
-  // label yields a 42.375px-tall button against a 44px floor. The house
-  // accessibility rule states the Styled button family "enforces this"; it does
-  // not. Kept as `test.fail()` rather than deleted or weakened: the requirement
-  // stays visible, CI stays green, and the day the recipe grows a min-height
-  // these flip to "unexpectedly passed" and tell us.
+  // Was NEH-220: `buttonRecipe` set no min-height, so a short label produced a
+  // 42.375px-tall button against a 44px floor, and these two were marked
+  // `test.fail()` so the unmet requirement stayed visible without reddening CI.
   //
-  // Not fixed inside this migration on purpose — it makes every button in a
-  // live product taller, which is the owner's call, not a side effect of a move.
-  test.fail();
+  // The recipe now states `minHeight`/`minWidth: 48px`, so they assert rather
+  // than document. Raising the floor makes every button in a live product
+  // taller, which is why it waited for an explicit product decision (NEH-251)
+  // instead of riding along with a refactor.
 
-  test("meets the 44x44 CSS px floor", async ({ mount }) => {
+  test("meets the 48x48 CSS px floor", async ({ mount }) => {
     // WCAG 2.5.5 Level AAA, and the house floor for this audience — elevated
     // rates of motor impairment mean a small target is a real barrier, not a
     // polish item. A short label is the worst case, so it is the one asserted.
     const component = await mount(<StyledButton>OK</StyledButton>);
     const box = (await component.boundingBox())!;
 
-    expect(box.height).toBeGreaterThanOrEqual(44);
-    expect(box.width).toBeGreaterThanOrEqual(44);
+    expect(box.height).toBeGreaterThanOrEqual(48);
+    expect(box.width).toBeGreaterThanOrEqual(48);
   });
 
   test("still meets it with only an icon and no label", async ({ mount }) => {
@@ -39,8 +37,8 @@ test.describe("tap target", () => {
     );
     const box = (await component.boundingBox())!;
 
-    expect(box.height).toBeGreaterThanOrEqual(44);
-    expect(box.width).toBeGreaterThanOrEqual(44);
+    expect(box.height).toBeGreaterThanOrEqual(48);
+    expect(box.width).toBeGreaterThanOrEqual(48);
   });
 });
 
