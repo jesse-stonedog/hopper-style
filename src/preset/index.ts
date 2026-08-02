@@ -144,6 +144,13 @@ export function hopperStylePreset(options: HopperStylePresetOptions = {}) {
             "0%": { transform: "rotate(0deg)" },
             "100%": { transform: "rotate(360deg)" },
           },
+          // The disabled strike-through on StyledInputToggle. A keyframe rather
+          // than a transition because it plays once on appearance, and there is
+          // no "before" state to transition from.
+          hopperStrikeIn: {
+            "0%": { transform: "scaleX(0)" },
+            "100%": { transform: "scaleX(1)" },
+          },
         },
         recipes,
       },

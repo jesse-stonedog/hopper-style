@@ -187,3 +187,6 @@ export { SELECT_VARIANTS } from "./components/StyledInputSelect";
 
 export { default as StyledSearch } from "./components/StyledSearch";
 export type { StyledSearchProps } from "./components/StyledSearch";
+
+export { default as StyledInputToggle } from "./components/StyledInputToggle";
+export type { StyledInputToggleProps } from "./components/StyledInputToggle";
