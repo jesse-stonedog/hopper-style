@@ -1,0 +1,78 @@
+# The merge gate for hopper-style.
+#
+# Until now there was none: every PR merged on a locally-run gate recorded in a
+# comment (NEH-235). That is the same command CI runs, so it was real testing —
+# but it uses the author's node_modules and checkout, which is exactly the drift
+# a hosted run exists to catch. Three products consume this package, and it is
+# public, so a broken `main` here is visible to strangers.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# A new push supersedes an in-flight run on the same branch. `main` is exempt:
+# its runs are the record of what landed, and cancelling one leaves a commit
+# with no verdict.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  gate:
+    name: Gate (typecheck, lint, unit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      # `npm ci`, not `npm install` — it installs exactly the lockfile and
+      # fails if package.json has drifted from it, which is the difference
+      # between reproducing a build and approximating one.
+      - run: npm ci
+
+      # codegen -> typecheck -> lint -> jest. Panda's generated `styled-system`
+      # is gitignored, so codegen has to run before anything type-checks; the
+      # `pre*` scripts in package.json handle that.
+      - run: npm run gate
+
+  component:
+    name: Component tests (4 viewports)
+    runs-on: ubuntu-latest
+    # Gated on the gate: if the code does not compile there is nothing useful
+    # to learn from rendering it, and this job pays for a browser download.
+    needs: gate
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      # Chromium only. The suite asserts layout, tap targets and computed
+      # styles rather than engine-specific rendering, so a second browser would
+      # roughly double the run for very little signal. Revisit if a
+      # cross-browser bug ever gets past this.
+      - run: npx playwright install --with-deps chromium
+
+      # Runs every *.ct.tsx four times — 375, 768, 1280, 1920. These are the
+      # widths where layout breaks, not popular phones. This is the tier that
+      # answers what jsdom cannot: pixels, overflow, and 44x44 targets.
+      - run: npm run test:ct
+
+      - uses: actions/upload-artifact@v4
+        # Only useful when something failed, and the trace is what makes a
+        # remote failure debuggable at all.
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
