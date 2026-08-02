@@ -2,14 +2,14 @@ import React from "react";
 import { render, screen } from "@testing-library/react";
 import StyledIcon from "../StyledIcon";
 import { createIcon, createIconFromComponent } from "../create-icon";
-import { HopperStyleProvider } from "../../config/style-config";
+import { StonedogStyleProvider } from "../../config/style-config";
 import type { IconSize } from "../../config/types";
 
 /** Renders inside a provider that sets only the app-wide icon size. */
 function withIconSize(iconSize: IconSize) {
   return function IconSizeWrapper({ children }: { children: React.ReactNode }) {
     return (
-      <HopperStyleProvider iconSize={iconSize}>{children}</HopperStyleProvider>
+      <StonedogStyleProvider iconSize={iconSize}>{children}</StonedogStyleProvider>
     );
   };
 }
@@ -63,7 +63,7 @@ describe("StyledIcon", () => {
     // only cares about the variant should not have its icons resize.
     const { container } = render(<StyledIcon icon={<svg />} />, {
       wrapper: ({ children }: { children: React.ReactNode }) => (
-        <HopperStyleProvider variant="glass">{children}</HopperStyleProvider>
+        <StonedogStyleProvider variant="glass">{children}</StonedogStyleProvider>
       ),
     });
     expect(container.firstChild).toHaveStyle({ width: "32px", height: "32px" });

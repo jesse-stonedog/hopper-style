@@ -11,10 +11,10 @@ import React, { createContext, useContext } from "react";
  *
  * ```tsx
  * // HopperGuard — Font Awesome Pro, via hopper-icons
- * <HopperStyleProvider icons={{ delete: <StyledTrash />, save: <StyledSave /> }}>
+ * <StonedogStyleProvider icons={{ delete: <StyledTrash />, save: <StyledSave /> }}>
  *
- * // maximus-compliance — Lucide, via the same seam
- * <HopperStyleProvider icons={{ delete: <Trash2 />, save: <Save /> }}>
+ * // optima-filings — Lucide, via the same seam
+ * <StonedogStyleProvider icons={{ delete: <Trash2 />, save: <Save /> }}>
  * ```
  *
  * ## Why a registry rather than an `icon` prop on every call site

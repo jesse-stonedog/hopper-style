@@ -1,16 +1,16 @@
 {
-  "name": "hopper-style",
+  "name": "stonedog-style",
   "version": "0.1.0",
   "description": "A Panda CSS design system: a themeable Panda preset plus the React components built on it.",
   "license": "Apache-2.0",
   "author": "StoneDogCode L.L.C.",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jesse-stonedog/hopper-style.git"
+    "url": "git+https://github.com/jesse-stonedog/stonedog-style.git"
   },
   "type": "module",
   "sideEffects": false,
-  "//exports": "This package ships TypeScript SOURCE, not a bundled dist/. Panda CSS extracts styles by statically parsing source files, so a consumer's `panda codegen` must be able to read our .tsx. A pre-bundled dist would emit class names Panda never generated a stylesheet for. Consumers transpile us (Next.js: `transpilePackages: ['hopper-style']`) and add our src to their panda `include` globs. See CLAUDE.md.",
+  "//exports": "This package ships TypeScript SOURCE, not a bundled dist/. Panda CSS extracts styles by statically parsing source files, so a consumer's `panda codegen` must be able to read our .tsx. A pre-bundled dist would emit class names Panda never generated a stylesheet for. Consumers transpile us (Next.js: `transpilePackages: ['stonedog-style']`) and add our src to their panda `include` globs. See CLAUDE.md.",
   "exports": {
     ".": "./src/index.ts",
     "./preset": "./src/preset/index.ts",

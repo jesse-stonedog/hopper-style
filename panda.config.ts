@@ -1,5 +1,5 @@
 import { defineConfig } from "@pandacss/dev";
-import { hopperStylePreset } from "./src/preset";
+import { stonedogStylePreset } from "./src/preset";
 
 /**
  * The package's OWN Panda config.
@@ -7,7 +7,7 @@ import { hopperStylePreset } from "./src/preset";
  * This exists so the library can typecheck and test itself: every component
  * imports from `styled-system/*`, which does not exist until `panda codegen`
  * runs. It is NOT what consumers use — they build their own `styled-system`
- * from their own config, and merely add `hopperStylePreset` to `presets` and
+ * from their own config, and merely add `stonedogStylePreset` to `presets` and
  * our source to `include`. See CLAUDE.md, "How a consumer wires this up".
  *
  * Keep this config as close to a bare consumer's as possible. Anything special
@@ -24,7 +24,7 @@ export default defineConfig({
    * declarations silently, with no error at build time and no error in the
    * browser. It just renders wrong.
    */
-  presets: ["@pandacss/preset-base", "@pandacss/preset-panda", hopperStylePreset()],
+  presets: ["@pandacss/preset-base", "@pandacss/preset-panda", stonedogStylePreset()],
   include: ["./src/**/*.{ts,tsx}"],
   exclude: ["./src/**/__tests__/**/*"],
   outdir: "styled-system",

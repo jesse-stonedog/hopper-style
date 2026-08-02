@@ -25,7 +25,7 @@ import { fontSizeMap } from "../config/font-size";
  *   scrolling div. A custom dropdown has to rebuild all of that and usually
  *   rebuilds most of it.
  * - **It submits.** A native select inside a `<form>` posts its value with no
- *   JavaScript. maximus-compliance's forms are server actions, so a custom
+ *   JavaScript. optima-filings's forms are server actions, so a custom
  *   dropdown there would need a hidden mirror input — machinery whose only
  *   purpose is to undo the choice to be custom.
  *

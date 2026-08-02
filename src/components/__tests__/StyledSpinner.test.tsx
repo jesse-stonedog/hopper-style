@@ -1,6 +1,6 @@
 import { render, screen, act } from "@testing-library/react";
 import StyledSpinner from "../StyledSpinner";
-import { HopperStyleProvider } from "../../config/style-config";
+import { StonedogStyleProvider } from "../../config/style-config";
 
 beforeEach(() => jest.useFakeTimers());
 afterEach(() => jest.useRealTimers());
@@ -92,9 +92,9 @@ describe("StyledSpinner", () => {
 
   it("respects the app-wide font-size profile through StyledText", () => {
     render(
-      <HopperStyleProvider fontSizeProfile="xl">
+      <StonedogStyleProvider fontSizeProfile="xl">
         <StyledSpinner loadText="Big" />
-      </HopperStyleProvider>,
+      </StonedogStyleProvider>,
     );
     expect(screen.getByText("Big")).toHaveStyle({
       fontSize: "var(--font-sizes-xl, 2rem)",

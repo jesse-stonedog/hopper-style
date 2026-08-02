@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import StyledIconButton from "../StyledIconButton";
-import { HopperStyleProvider } from "../../config/style-config";
+import { StonedogStyleProvider } from "../../config/style-config";
 
 const Icon = () => <svg data-testid="icon" />;
 
@@ -69,9 +69,9 @@ describe("StyledIconButton", () => {
 
     it("falls back to the app-wide variant", () => {
       render(
-        <HopperStyleProvider variant="matte">
+        <StonedogStyleProvider variant="matte">
           <StyledIconButton aria-label="Go"><Icon /></StyledIconButton>
-        </HopperStyleProvider>,
+        </StonedogStyleProvider>,
       );
       expect(screen.getByRole("button")).toHaveAttribute("data-panda-variant", "matte");
     });

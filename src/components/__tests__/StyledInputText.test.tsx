@@ -2,7 +2,7 @@ import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import StyledInputText from "../StyledInputText";
 import StyledInputTextArea from "../StyledInputTextArea";
-import { HopperStyleProvider } from "../../config/style-config";
+import { StonedogStyleProvider } from "../../config/style-config";
 import type { Dictation } from "../dictation";
 
 /** A supported adapter with everything stubbed. */
@@ -20,9 +20,9 @@ const FIELDS = [
 ] as const;
 
 const withIcons = (ui: React.ReactNode) => (
-  <HopperStyleProvider icons={{ dictate: <svg data-testid="mic-glyph" />, redo: <svg /> }}>
+  <StonedogStyleProvider icons={{ dictate: <svg data-testid="mic-glyph" />, redo: <svg /> }}>
     {ui}
-  </HopperStyleProvider>
+  </StonedogStyleProvider>
 );
 
 describe.each(FIELDS)("$name", ({ Field, tag }) => {
@@ -278,9 +278,9 @@ describe.each(FIELDS)("$name", ({ Field, tag }) => {
 
     it("inherits the app-wide variant", () => {
       const { container } = render(
-        <HopperStyleProvider variant="matte">
+        <StonedogStyleProvider variant="matte">
           <Field />
-        </HopperStyleProvider>,
+        </StonedogStyleProvider>,
       );
       expect((container.querySelector(tag.toLowerCase()) as HTMLElement).className).toBe(
         classOf(<Field variant="matte" />),

@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import StyledText from "../StyledText";
 import StyledHeading from "../StyledHeading";
-import { HopperStyleProvider } from "../../config/style-config";
+import { StonedogStyleProvider } from "../../config/style-config";
 import { fontSizeMap, getFontSizeValue } from "../../config/font-size";
 
 describe("StyledText", () => {
@@ -12,18 +12,18 @@ describe("StyledText", () => {
 
   it("sizes text from the app-wide profile", () => {
     render(
-      <HopperStyleProvider fontSizeProfile="xl">
+      <StonedogStyleProvider fontSizeProfile="xl">
         <StyledText>big</StyledText>
-      </HopperStyleProvider>,
+      </StonedogStyleProvider>,
     );
     expect(screen.getByText("big")).toHaveStyle({ fontSize: fontSizeMap.xl });
   });
 
   it("lets an explicit size win over the profile", () => {
     render(
-      <HopperStyleProvider fontSizeProfile="xl">
+      <StonedogStyleProvider fontSizeProfile="xl">
         <StyledText size="xs">small anyway</StyledText>
-      </HopperStyleProvider>,
+      </StonedogStyleProvider>,
     );
     expect(screen.getByText("small anyway")).toHaveStyle({
       fontSize: fontSizeMap.xs,
@@ -34,9 +34,9 @@ describe("StyledText", () => {
     // Used where a label must not grow with the profile — e.g. text inside a
     // fixed-height control that would otherwise clip.
     render(
-      <HopperStyleProvider fontSizeProfile="xl">
+      <StonedogStyleProvider fontSizeProfile="xl">
         <StyledText fixedSize>pinned</StyledText>
-      </HopperStyleProvider>,
+      </StonedogStyleProvider>,
     );
     expect(screen.getByText("pinned")).toHaveStyle({ fontSize: fontSizeMap.md });
   });
@@ -59,9 +59,9 @@ describe("StyledText", () => {
 describe("StyledHeading", () => {
   it("renders one tier above the current profile, so hierarchy survives every font size", () => {
     render(
-      <HopperStyleProvider fontSizeProfile="md">
+      <StonedogStyleProvider fontSizeProfile="md">
         <StyledHeading>title</StyledHeading>
-      </HopperStyleProvider>,
+      </StonedogStyleProvider>,
     );
     expect(screen.getByText("title")).toHaveStyle({ fontSize: fontSizeMap.lg });
   });

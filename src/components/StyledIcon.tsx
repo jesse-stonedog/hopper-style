@@ -72,7 +72,7 @@ export interface StyledIconProps
   icon?: React.ReactNode;
   children?: React.ReactNode;
   /**
-   * Box size. Omit it and the app-wide default from `HopperStyleProvider`
+   * Box size. Omit it and the app-wide default from `StonedogStyleProvider`
    * applies (`"2x"` if the host sets nothing).
    *
    * **Prefer omitting it.** Setting the app-wide default once is what keeps an

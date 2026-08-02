@@ -1,7 +1,7 @@
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import StyledInputBool from "../StyledInputBool";
-import { HopperStyleProvider } from "../../config/style-config";
+import { StonedogStyleProvider } from "../../config/style-config";
 
 describe("StyledInputBool", () => {
   it("renders a checkbox", () => {
@@ -93,9 +93,9 @@ describe("StyledInputBool", () => {
 
     it("inherits the app-wide variant when the call site names none", () => {
       const { container } = render(
-        <HopperStyleProvider variant="outline">
+        <StonedogStyleProvider variant="outline">
           <StyledInputBool label="inherited" />
-        </HopperStyleProvider>,
+        </StonedogStyleProvider>,
       );
       expect(container.querySelector("input")?.className).toBe(
         classOf(<StyledInputBool label="explicit" variant="outline" />),
@@ -103,7 +103,7 @@ describe("StyledInputBool", () => {
     });
 
     it("keeps ghost, which the recipe defines but no user can select app-wide", () => {
-      // The regression this migration nearly shipped. hopper-style's default
+      // The regression this migration nearly shipped. stonedog-style's default
       // gate is the five app-wide appearances, so `ghost` fell through to
       // `solid` — silently, since a coerced variant still renders.
       expect(classOf(<StyledInputBool label="g" variant="ghost" />)).not.toBe(
@@ -122,9 +122,9 @@ describe("StyledInputBool", () => {
 
     it("lets the call site override the app-wide variant", () => {
       const { container } = render(
-        <HopperStyleProvider variant="outline">
+        <StonedogStyleProvider variant="outline">
           <StyledInputBool label="override" variant="solid" />
-        </HopperStyleProvider>,
+        </StonedogStyleProvider>,
       );
       expect(container.querySelector("input")?.className).toBe(
         classOf(<StyledInputBool label="explicit" variant="solid" />),

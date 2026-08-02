@@ -8,7 +8,7 @@ import {
   getBackgroundForText,
   requiredCssCustomProperties,
 } from "../semantic-variables";
-import { hopperStylePreset, hopperStyleRecipes } from "../index";
+import { stonedogStylePreset, stonedogStyleRecipes } from "../index";
 
 describe("the colour token contract", () => {
   it("maps every token to a bare custom property at the default prefix", () => {
@@ -25,17 +25,17 @@ describe("the colour token contract", () => {
   });
 
   it("re-namespaces every property when a consumer picks its own prefix", () => {
-    const colors = createSemanticColors("maximus");
+    const colors = createSemanticColors("optima");
     const values = Object.values(colors).map((d) => d.value);
     expect(values.length).toBeGreaterThan(0);
-    expect(values.every((v) => v.startsWith("var(--maximus-"))).toBe(true);
+    expect(values.every((v) => v.startsWith("var(--optima-"))).toBe(true);
     expect(values.some((v) => v.includes("--hopper-"))).toBe(false);
   });
 
   it("names one required custom property per token", () => {
     expect(requiredCssCustomProperties()).toHaveLength(colorTokenNames().length);
-    expect(requiredCssCustomProperties("maximus")).toContain(
-      "--maximus-box-primary-bg",
+    expect(requiredCssCustomProperties("optima")).toContain(
+      "--optima-box-primary-bg",
     );
   });
 
@@ -113,10 +113,10 @@ describe("the preset", () => {
     // The style variant is chosen by the user at runtime, so Panda's static
     // extractor never sees the concrete value. Without staticCss, switching
     // variants yields class names with no CSS behind them.
-    const preset = hopperStylePreset();
+    const preset = stonedogStylePreset();
     const staticRecipes = preset.staticCss?.recipes ?? {};
     expect(Object.keys(staticRecipes).sort()).toEqual(
-      Object.keys(hopperStyleRecipes).sort(),
+      Object.keys(stonedogStyleRecipes).sort(),
     );
     expect(Object.values(staticRecipes).every((v) => Array.isArray(v) && v[0] === "*")).toBe(true);
   });
@@ -124,7 +124,7 @@ describe("the preset", () => {
   it("does not impose application-level decisions on its consumers", () => {
     // A preset that restyles `body` or forces a preflight is hard to adopt;
     // those belong to the app. Regression guard on the adoption story.
-    const preset = hopperStylePreset() as unknown as Record<string, unknown>;
+    const preset = stonedogStylePreset() as unknown as Record<string, unknown>;
     expect(preset.globalCss).toBeUndefined();
     expect(preset.preflight).toBeUndefined();
     expect(preset.include).toBeUndefined();
@@ -132,7 +132,7 @@ describe("the preset", () => {
   });
 
   it("threads the prefix option through to the generated tokens", () => {
-    const preset = hopperStylePreset({ cssVarPrefix: "maximus" });
+    const preset = stonedogStylePreset({ cssVarPrefix: "optima" });
     const colors = preset.theme?.extend?.tokens?.colors as
       | Record<string, { value: string }>
       | undefined;
@@ -140,6 +140,6 @@ describe("the preset", () => {
     // throw rather than fail helpfully if the prefix option stopped threading
     // through and the token vanished.
     expect(colors?.boxBgPrimary).toBeDefined();
-    expect(colors?.boxBgPrimary?.value).toBe("var(--maximus-box-primary-bg)");
+    expect(colors?.boxBgPrimary?.value).toBe("var(--optima-box-primary-bg)");
   });
 });

@@ -1,7 +1,7 @@
 import React from "react";
 import StyledInputText from "./StyledInputText";
 import StyledInputTextArea from "./StyledInputTextArea";
-import { HopperStyleProvider } from "../config/style-config";
+import { StonedogStyleProvider } from "../config/style-config";
 
 /**
  * Mount targets for `StyledInputText.ct.tsx`.
@@ -77,7 +77,7 @@ export function DictationField({
   const Field = multiline ? StyledInputTextArea : StyledInputText;
 
   return (
-    <HopperStyleProvider icons={{ dictate: <MicGlyph />, redo: <RedoGlyph /> }}>
+    <StonedogStyleProvider icons={{ dictate: <MicGlyph />, redo: <RedoGlyph /> }}>
       <div style={{ width: "100%" }}>
         <Field
           data-testid="field"
@@ -89,7 +89,7 @@ export function DictationField({
           {...(withoutDictation ? {} : { dictation })}
         />
       </div>
-    </HopperStyleProvider>
+    </StonedogStyleProvider>
   );
 }
 
@@ -104,12 +104,12 @@ export default DictationField;
 export function ProfiledFields() {
   return (
     <div>
-      <HopperStyleProvider fontSizeProfile="sm">
+      <StonedogStyleProvider fontSizeProfile="sm">
         <StyledInputText data-testid="field-sm" defaultValue="Readable?" />
-      </HopperStyleProvider>
-      <HopperStyleProvider fontSizeProfile="xl">
+      </StonedogStyleProvider>
+      <StonedogStyleProvider fontSizeProfile="xl">
         <StyledInputText data-testid="field-xl" defaultValue="Readable?" />
-      </HopperStyleProvider>
+      </StonedogStyleProvider>
     </div>
   );
 }
