@@ -7,6 +7,7 @@ import { inputTextRecipe } from "styled-system/recipes";
 import { useFontSizeProfile, useResolvedVariant } from "../config/style-config";
 import { fontSizeMap } from "../config/font-size";
 import DictationControls, { dictationPadding } from "./DictationControls";
+import DictationPrompt from "./DictationPrompt";
 import { INPUT_TEXT_VARIANTS, type InputTextVariant } from "./StyledInputText";
 import type { Dictation } from "./dictation";
 
@@ -41,6 +42,10 @@ export interface StyledInputTextAreaProps
   dictation?: Dictation;
   micLabel?: string;
   redoLabel?: string;
+  /** Wording for the "add or replace?" prompt a second recording raises. */
+  continueQuestion?: string;
+  continueLabel?: string;
+  startOverLabel?: string;
 }
 
 const StyledInputTextArea = React.forwardRef<
@@ -54,6 +59,9 @@ const StyledInputTextArea = React.forwardRef<
     dictation,
     micLabel = "Dictate",
     redoLabel = "Record again",
+    continueQuestion = "Add to what you already wrote?",
+    continueLabel = "Continue",
+    startOverLabel = "Start over",
     ...props
   },
   ref,
@@ -80,19 +88,29 @@ const StyledInputTextArea = React.forwardRef<
   if (!dictation) return field;
 
   return (
-    <div
-      style={{ position: "relative", display: "inline-block", width: "100%" }}
-      // Pins the controls to the top of a growing field — see above.
-      data-dictation-anchor="top"
-    >
-      {field}
-      <DictationControls
+    <>
+      <div
+        style={{ position: "relative", display: "inline-block", width: "100%" }}
+        // Pins the controls to the top of a growing field — see above.
+        data-dictation-anchor="top"
+      >
+        {field}
+        <DictationControls
+          dictation={dictation}
+          micLabel={micLabel}
+          redoLabel={redoLabel}
+          anchor="top"
+        />
+      </div>
+      {/* This is where the prompt matters most: a textarea is where someone has
+          actually written a paragraph worth losing. */}
+      <DictationPrompt
         dictation={dictation}
-        micLabel={micLabel}
-        redoLabel={redoLabel}
-        anchor="top"
+        question={continueQuestion}
+        continueLabel={continueLabel}
+        startOverLabel={startOverLabel}
       />
-    </div>
+    </>
   );
 });
 
