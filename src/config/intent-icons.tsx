@@ -56,6 +56,10 @@ export const ICON_INTENTS = [
   "cancel",
   "clone",
   "delete",
+  // Dictation. Only used by the text inputs, and only when a host passes them
+  // a `dictation` adapter — a product with no speech support registers neither
+  // and never renders either.
+  "dictate",
   "edit",
   "emoji",
   "home",
@@ -64,6 +68,7 @@ export const ICON_INTENTS = [
   "new",
   "next",
   "play",
+  "redo",
   "rename",
   "resume",
   "save",
