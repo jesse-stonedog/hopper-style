@@ -9,25 +9,43 @@ import type { FontSizeKey } from "./types";
  * the browser's own font-size setting, which is the accessibility affordance
  * that users with low vision actually reach for.
  *
- * The scale is intentionally shallow at the bottom and wide at the top: the
- * jump from `xs` to `sm` is larger than a typographic scale would suggest,
- * because the audience choosing `xs` is choosing density, and the audience
- * choosing `xl` needs a genuinely large step to benefit.
+ * ## The fallbacks are a conventional web scale, and that is a recent change
+ *
+ * `md` is `1rem` (16px), and the rest is the familiar Tailwind/Panda ramp.
+ * Until NEH-251 the fallbacks encoded HopperGuard's elder-sized scale instead —
+ * `md` was `1.375rem` (~22px) — because this package was extracted from that
+ * product and nothing else consumed it yet.
+ *
+ * That was the wrong default for a shared library. It is not a scale anyone
+ * *chose*; it was what a host got for saying nothing, and every new consumer
+ * inherited an eldercare product's typography by accident.
+ *
+ * **A host that needs a different scale defines the custom properties.**
+ * HopperGuard does exactly that now (its `globals.css` pins all thirteen tiers
+ * at the elder values), which is what made this change invisible there — and
+ * that pinning landed and was verified BEFORE this, deliberately, because
+ * flipping the fallback first would have shrunk every piece of text in that app
+ * with nothing failing anywhere.
+ *
+ * So: change these only with the same care. A fallback change is silent in
+ * every host that has not named its own scale.
  */
 export const fontSizeMap: Record<string, string> = {
   xs: "var(--font-sizes-xs, 0.75rem)",
-  sm: "var(--font-sizes-sm, 1.0625rem)",
-  md: "var(--font-sizes-md, 1.375rem)",
-  lg: "var(--font-sizes-lg, 1.6875rem)",
-  xl: "var(--font-sizes-xl, 2rem)",
-  "2xl": "var(--font-sizes-2xl, 2.3125rem)",
-  "3xl": "var(--font-sizes-3xl, 2.625rem)",
-  "4xl": "var(--font-sizes-4xl, 2.9375rem)",
-  "5xl": "var(--font-sizes-5xl, 3.25rem)",
-  "6xl": "var(--font-sizes-6xl, 3.5625rem)",
-  "7xl": "var(--font-sizes-7xl, 3.875rem)",
-  "8xl": "var(--font-sizes-8xl, 4.1875rem)",
-  "9xl": "var(--font-sizes-9xl, 4.5rem)",
+  sm: "var(--font-sizes-sm, 0.875rem)",
+  md: "var(--font-sizes-md, 1rem)",
+  lg: "var(--font-sizes-lg, 1.125rem)",
+  xl: "var(--font-sizes-xl, 1.25rem)",
+  // Heading-only tiers. Not offerable as a global preference — see
+  // FONT_SIZE_PROFILES — so they ramp faster than the body range above.
+  "2xl": "var(--font-sizes-2xl, 1.5rem)",
+  "3xl": "var(--font-sizes-3xl, 1.875rem)",
+  "4xl": "var(--font-sizes-4xl, 2.25rem)",
+  "5xl": "var(--font-sizes-5xl, 3rem)",
+  "6xl": "var(--font-sizes-6xl, 3.75rem)",
+  "7xl": "var(--font-sizes-7xl, 4.5rem)",
+  "8xl": "var(--font-sizes-8xl, 6rem)",
+  "9xl": "var(--font-sizes-9xl, 8rem)",
 };
 
 /** Human-readable names for the five selectable profiles. */
@@ -45,7 +63,7 @@ export function getFontSizeLabel(size: string): string {
 }
 
 /**
- * The literal fallback inside a `fontSizeMap` entry, e.g. `"1.375rem"`.
+ * The literal fallback inside a `fontSizeMap` entry, e.g. `"1rem"`.
  *
  * Used where a real length is needed rather than a CSS reference — measuring,
  * or a context that cannot resolve custom properties. Returns `"unknown"` for

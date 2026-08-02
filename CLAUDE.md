@@ -99,16 +99,33 @@ panda.config.ts            the package's OWN config, so it can test itself
 **every field added to `StyleConfig` is a field a new host must supply before it
 can render a single button.**
 
-### The defaults lean large, and that is a compatibility promise
+### Changing a default is silent, and that is the whole hazard
 
-This came out of a product for an often-elderly, sometimes cognitively-impaired
-audience, so the shipped defaults are bigger than a conventional web app wants:
-`fontSizeProfile: "md"` is 1.375rem (~22px), and `iconSize: "2x"` is 32px.
+Both of these are what a host gets for saying nothing, so changing one resizes
+every consumer that has not opted out — with no build error, no failing test,
+and nothing visible until someone looks at the pixels.
 
-**Do not "fix" them.** ~150 call sites in the originating app rely on `2x`, and
-changing a default resizes every icon in every existing consumer with nothing
-failing anywhere — the worst kind of change. A host that wants a standard scale
-sets one, and both halves are host-tunable already:
+| Default | Value | Status |
+|---|---|---|
+| `fontSizeProfile: "md"` | **1rem** (16px) | conventional web scale, as of NEH-251 |
+| `iconSize: "2x"` | 32px | **still HopperGuard's elder size** |
+
+**The font scale moved; the icon default has not.** The order that made the
+font change safe is the order any future one has to follow:
+
+1. every host that needs the old value **names it explicitly** and that lands
+   and is verified first — HopperGuard pinned all thirteen `--font-sizes-*`
+   tiers in its `globals.css`;
+2. *only then* does the package default change.
+
+Done the other way round, the first release silently shrinks a product built
+for an often-elderly, sometimes cognitively-impaired audience.
+
+`iconSize` is still `"2x"` because step 1 has not happened for it: ~150
+HopperGuard call sites rely on that default and the app does not set
+`iconSize` on its provider. **Pin it there before touching this.**
+
+Both halves are host-tunable already:
 
 - **Font size** via the `--font-sizes-*` custom properties, since every
   `fontSizeMap` entry is `var(--font-sizes-KEY, <fallback>)`.
