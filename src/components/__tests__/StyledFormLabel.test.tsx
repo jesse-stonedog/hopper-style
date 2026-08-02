@@ -77,6 +77,38 @@ describe("StyledFormLabel", () => {
     expect(el).toHaveAttribute("id", "my-label");
   });
 
+  describe("text size (NEH-233)", () => {
+    it("declares no font size of its own", () => {
+      // The fix. A flat `1rem` in the recipe made the label ignore the app-wide
+      // profile — in a product whose body text is 1.375rem it was the caption
+      // under its own field, and it did not move when a user raised their
+      // text-size setting.
+      //
+      // Asserted on the generated stylesheet because that is where the
+      // declaration lived; jsdom cannot resolve the resulting size (see
+      // StyledFormLabel.ct.tsx, which checks the pixels in a real browser).
+      const rules = Array.from(document.styleSheets)
+        .flatMap((s) => Array.from(s.cssRules))
+        .map((r) => r.cssText);
+      render(<StyledFormLabel>Email</StyledFormLabel>);
+      const labelRules = rules.filter((r) => r.includes("font-weight: bold"));
+      expect(labelRules.some((r) => /font-size:\s*1rem/.test(r))).toBe(false);
+    });
+
+    it("still lets a caller set one explicitly", () => {
+      // The deviation belongs at the call site, where it is visible, not baked
+      // into every label in every consumer.
+      const { container } = render(
+        <StyledFormLabel fontSize="1rem">Email</StyledFormLabel>,
+      );
+      expect(container.querySelector("label")?.className).not.toBe(
+        render(<StyledFormLabel>Email</StyledFormLabel>).container.querySelector(
+          "label",
+        )?.className,
+      );
+    });
+  });
+
   describe("theming — the three colours that used to be literals", () => {
     // These assert the generated stylesheet, which is the only place the fix is
     // observable: a hardcoded `#e53e3e` type-checks, renders, and looks fine on

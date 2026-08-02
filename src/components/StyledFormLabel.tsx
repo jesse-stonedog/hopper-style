@@ -3,6 +3,8 @@
 import React from "react";
 import { styled } from "styled-system/jsx";
 import type { HTMLStyledProps } from "styled-system/types";
+import { useFontSizeProfile } from "../config/style-config";
+import { fontSizeMap } from "../config/font-size";
 
 /**
  * The label above a form control.
@@ -27,6 +29,27 @@ import type { HTMLStyledProps } from "styled-system/types";
  * fallback. It was invisible because it *worked*: the fallback is a reasonable
  * grey, so nothing looked broken, and the label simply sat outside theming.
  *
+ * ## It follows the app-wide text size (NEH-233)
+ *
+ * The label used to declare a flat `fontSize: "1rem"`, which opted it out of
+ * the type scale. In a product whose default body text is 1.375rem that made
+ * the label the *smaller* text — the caption under its own field — and, worse,
+ * it did not move when a user raised their text-size setting. That setting is
+ * the accommodation a low-vision reader actually reaches for, so a control
+ * ignoring it is ignoring them.
+ *
+ * It now reads the profile the same way `StyledText` does. Note that plain
+ * inheritance would NOT have worked: nothing puts a font size on the DOM, so
+ * dropping the declaration just pinned the label to the browser's 16px — still
+ * fixed, and no longer even declared. The profile has to be read.
+ *
+ * Callers wanting a specific size still pass `fontSize`, which wins. That is
+ * the right way round: the deviation is visible at the call site instead of
+ * baked into every label in every consumer.
+ *
+ * **This visibly resizes existing labels** — that was the whole reason it was
+ * split out of the migration rather than smuggled into it.
+ *
  * ## `required` and `optional` are not symmetric, deliberately
  *
  * `optional` renders visible text, because "(optional)" is information the
@@ -46,13 +69,8 @@ const PandaFormLabel = styled("label", {
     fontWeight: "bold",
     marginBottom: "0.5rem",
     color: "textPrimary",
-    // Deliberately kept, though it is arguably wrong: a fixed 1rem means the
-    // label ignores the app-wide font-size profile, so in a product tuned up
-    // for low-vision readers the label stays small while its own field grows.
-    // Left as-is because removing it resizes every label in every existing
-    // consumer with nothing failing anywhere — the change wants its own PR and
-    // someone actually looking at the result. Tracked in NEH-233.
-    fontSize: "1rem",
+    // No fontSize — the label inherits, so it follows the app-wide text size.
+    // See the NEH-233 note above.
     lineHeight: "1.25",
     cursor: "pointer",
   },
@@ -73,9 +91,31 @@ const StyledFormLabel: React.FC<StyledFormLabelProps> = ({
   htmlFor,
   optional,
   required,
+  fontSize,
+  style,
   ...props
-}) => (
-  <PandaFormLabel htmlFor={htmlFor} {...props}>
+}) => {
+  // Unconditional, at the top: inlining this into the expression below reads
+  // fine and is a hooks-order violation the moment `fontSize` is passed.
+  const profile = useFontSizeProfile();
+
+  // An inline style, not a Panda prop — and this is the part that is easy to
+  // get wrong twice. Panda extracts styles by parsing source at BUILD time, so
+  // a prop whose value is only known at runtime produces a class name with no
+  // rule behind it: the element renders at the browser default and nothing
+  // errors. `StyledText` reaches for an inline style for exactly this reason.
+  //
+  // Applied only when the caller named no size, so their Panda `fontSize` class
+  // is not beaten by an inline declaration.
+  const sized = fontSize ? undefined : fontSizeMap[profile] ?? fontSizeMap.md;
+
+  return (
+  <PandaFormLabel
+    htmlFor={htmlFor}
+    fontSize={fontSize}
+    style={{ ...(sized ? { fontSize: sized } : {}), ...style }}
+    {...props}
+  >
     {children}
     {required && (
       <styled.span color="textError" marginLeft="0.25em" aria-hidden="true">
@@ -93,7 +133,8 @@ const StyledFormLabel: React.FC<StyledFormLabelProps> = ({
       </>
     )}
   </PandaFormLabel>
-);
+  );
+};
 
 StyledFormLabel.displayName = "StyledFormLabel";
 

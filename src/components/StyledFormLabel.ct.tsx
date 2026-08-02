@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/experimental-ct-react";
 import type { Page } from "@playwright/test";
 import StyledFormLabel from "./StyledFormLabel";
+import { SizedLabels, LabelBesideText } from "./StyledFormLabel.harness";
 
 /**
  * The questions jsdom cannot answer about a label: what colour it actually
@@ -103,6 +104,30 @@ test.describe("StyledFormLabel", () => {
     );
     await page.getByText("Email address").click();
     await expect(page.locator("#email")).toBeFocused();
+  });
+
+  test("grows with the app-wide text size (NEH-233)", async ({ mount }) => {
+    // The pixels, which is the only place this is really observable — jsdom
+    // cannot resolve `var(--font-sizes-*)` at all.
+    const component = await mount(<SizedLabels />);
+    const px = (testId: string) =>
+      component
+        .getByTestId(testId)
+        .evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
+
+    expect(await px("label-xl")).toBeGreaterThan(await px("label-sm"));
+  });
+
+  test("matches the text beside it rather than shrinking below it", async ({ mount }) => {
+    // The specific defect: at HopperGuard's default profile the label rendered
+    // at 16px next to 22px body text, reading as a caption for its own field.
+    const component = await mount(<LabelBesideText />);
+    const size = (testId: string) =>
+      component
+        .getByTestId(testId)
+        .evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
+
+    expect(await size("label")).toBeGreaterThanOrEqual(await size("body"));
   });
 
   test("a long label wraps instead of overflowing", async ({ mount, page }) => {
