@@ -141,6 +141,23 @@ describe("StyledInputToggle", () => {
     });
   });
 
+  it("puts a caller's test id on the switch itself", () => {
+    // So `click(getByTestId(...))` actually toggles. On the container it would
+    // silently do nothing — and that reads as a broken component rather than a
+    // selector aimed one level too high.
+    const onChange = jest.fn();
+    render(
+      <StyledInputToggle
+        value={false}
+        onChange={onChange}
+        label="X"
+        data-testid="my-toggle"
+      />,
+    );
+    fireEvent.click(screen.getByTestId("my-toggle"));
+    expect(onChange).toHaveBeenCalledWith(true);
+  });
+
   it("uses no palette literals", () => {
     // It painted itself `gray.300` / `green.400` / `white`, so it ignored the
     // theme and dark mode. The tokens now come from TEXT_BACKGROUND_PAIRS, so

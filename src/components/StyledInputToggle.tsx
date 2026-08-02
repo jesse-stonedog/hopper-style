@@ -182,7 +182,7 @@ export default function StyledInputToggle({
   const name = label ?? (typeof tooltip === "string" ? tooltip : undefined);
 
   const content = (
-    <ToggleContainer id={id} data-testid={props["data-testid"]}>
+    <ToggleContainer id={id}>
       {hasIcons && (
         <IconContainer>
           {value ? iconOn : iconOff}
@@ -198,7 +198,11 @@ export default function StyledInputToggle({
         aria-label={name}
         disabled={disabled}
         data-state={value ? "on" : "off"}
-        data-testid="toggle-switch"
+        // The caller's id lands on the BUTTON, not the container. A test that
+        // does `click(getByTestId(...))` has to hit the interactive element —
+        // clicking a wrapper does nothing, and the failure looks like a broken
+        // component rather than a mis-aimed selector.
+        data-testid={props["data-testid"] ?? "toggle-switch"}
         onClick={() => onChange(!value)}
       >
         <Track on={value}>
