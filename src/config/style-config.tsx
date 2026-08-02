@@ -78,7 +78,20 @@ export const DEFAULT_STYLE_CONFIG: StyleConfig = {
 
 const StyleConfigContext = createContext<StyleConfig>(DEFAULT_STYLE_CONFIG);
 
-export interface HopperStyleProviderProps extends Partial<StyleConfig> {
+/**
+ * Every setting optional, and explicitly accepting `undefined`.
+ *
+ * `Partial<StyleConfig>` alone is not enough under
+ * `exactOptionalPropertyTypes`: it makes each key optional but still refuses an
+ * explicit `undefined`. Hosts routinely pass one — `variant={user?.variant}` —
+ * and rejecting that would push a conditional spread into every call site for
+ * no benefit, since the provider already treats absent and undefined the same.
+ */
+type OptionalStyleConfig = {
+  [K in keyof StyleConfig]?: StyleConfig[K] | undefined;
+};
+
+export interface HopperStyleProviderProps extends OptionalStyleConfig {
   children: React.ReactNode;
   /**
    * Which icon to draw for each intent — see `config/intent-icons.tsx`.
@@ -86,7 +99,7 @@ export interface HopperStyleProviderProps extends Partial<StyleConfig> {
    * This is how one `StyledDeleteButton` serves a Font Awesome product and a
    * Lucide one. Optional: an unregistered intent simply renders no icon.
    */
-  icons?: IntentIcons;
+  icons?: IntentIcons | undefined;
 }
 
 /**
