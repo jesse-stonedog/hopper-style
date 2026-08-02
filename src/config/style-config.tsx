@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useMemo } from "react";
 import type { DensityProfile, FontSizeProfile, IconSize, ThemeVariant } from "./types";
+import { resolveDensityStep, type DensityBase, type DensityStep } from "./density";
 import { THEME_VARIANTS } from "./types";
 import { IntentIconProvider, type IntentIcons } from "./intent-icons";
 
@@ -32,13 +33,25 @@ export interface StyleConfig {
   variant: ThemeVariant;
 
   /**
-   * How tightly the UI packs.
+   * The **user's** density preference, relative to the app's baseline.
    *
    * Not cosmetic: at `compact` the intent buttons drop their text label and
    * show only their icon, so this changes what a control *says*, not just its
    * padding. That is why it lives here rather than being left to CSS.
    */
   density: DensityProfile;
+
+  /**
+   * The **application's** density baseline — the rung `density: "normal"` means.
+   *
+   * HopperGuard runs `spacious`, both Optima products `compact`, RozCards
+   * `standard`. See `config/density.ts`: this and `density` are a position and
+   * an offset on one scale, not two competing axes.
+   *
+   * Defaults to `standard`, whose spacing (8px) is exactly the fallback the
+   * recipes have always used — so a host that says nothing sees no change.
+   */
+  densityBase: DensityBase;
 
   /**
    * The app-wide default icon size, used by any `StyledIcon` that is not given
@@ -70,6 +83,10 @@ export const DEFAULT_STYLE_CONFIG: StyleConfig = {
   fontSizeProfile: "md",
   variant: "solid",
   density: "normal",
+  // `standard` + `normal` resolves to 8px, which is the fallback baked into
+  // every recipe. An unconfigured host renders exactly as it did before the
+  // ladder existed.
+  densityBase: "standard",
   // Not the middle of the scale, unlike the two above: this one is pinned to
   // what the originating application already renders. Changing it would be an
   // invisible, app-wide visual change to every existing consumer.
@@ -125,6 +142,7 @@ export function StonedogStyleProvider({
   variant,
   iconSize,
   density,
+  densityBase,
   icons,
 }: StonedogStyleProviderProps) {
   const value = useMemo<StyleConfig>(
@@ -134,8 +152,9 @@ export function StonedogStyleProvider({
       variant: variant ?? DEFAULT_STYLE_CONFIG.variant,
       iconSize: iconSize ?? DEFAULT_STYLE_CONFIG.iconSize,
       density: density ?? DEFAULT_STYLE_CONFIG.density,
+      densityBase: densityBase ?? DEFAULT_STYLE_CONFIG.densityBase,
     }),
-    [fontSizeProfile, variant, iconSize, density],
+    [fontSizeProfile, variant, iconSize, density, densityBase],
   );
 
   return (
@@ -221,7 +240,24 @@ export function useResolvedVariant(
   return allowed.includes(candidate) ? candidate : "solid";
 }
 
-/** How tightly the UI packs. `compact` makes intent buttons icon-only. */
+/**
+ * The user's density preference, as they chose it.
+ *
+ * Relative to the app's baseline, so it answers "did the user ask for tighter?"
+ * rather than "how much padding is there?". `useDensityStep` answers the
+ * second. `compact` is what makes intent buttons icon-only.
+ */
 export function useDensity(): DensityProfile {
   return useStyleConfig().density;
+}
+
+/**
+ * Where the app's baseline and the user's preference actually land.
+ *
+ * This is the value that maps to real spacing — feed it to
+ * `densityCustomProperties` to get the properties the recipes read.
+ */
+export function useDensityStep(): DensityStep {
+  const { densityBase, density } = useStyleConfig();
+  return resolveDensityStep(densityBase, density);
 }

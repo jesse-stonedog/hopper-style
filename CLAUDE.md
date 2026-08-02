@@ -89,6 +89,7 @@ src/
     style-config.tsx       StonedogStyleProvider / useStyleConfig / useResolvedVariant
     logger.ts              the injectable logger (no-op by default)
     font-size.ts           the rem-based type scale
+    density.ts             the five-step density ladder + its spacing metrics
     types.ts               variant + font-size + icon-size vocabularies
   components/              the React components
   index.ts                 the public API
@@ -141,12 +142,12 @@ path keeps working.
 
 ### The consumers
 
-| Repo | On disk | Visibility | Sizing |
-|---|---|---|---|
-| HopperGuard (`hopper-web`) | `~/src/elderlink/hopperguard`, submodule `packages/stonedog-style` | private | large (elder audience) |
-| `optima-filings` | `~/src/stonedogcode/optima/optima-filings` | public, AGPLv3 | standard, `cssVarPrefix: "optima"` |
-| `optima-cloud-saas` | `~/src/stonedogcode/optima/optima-cloud-saas` | private | standard, `cssVarPrefix: "optima"` |
-| RozCards | `~/src/stonedogcode/card-sorter/rozcards` | private | **not yet a consumer** — Tailwind v4 today, adoption tracked separately |
+| Repo | On disk | Visibility | `densityBase` | Notes |
+|---|---|---|---|---|
+| HopperGuard (`hopper-web`) | `~/src/elderlink/hopperguard`, submodule `packages/stonedog-style` | private | `spacious` | elder audience; pins its own `--font-sizes-*` |
+| `optima-filings` | `~/src/stonedogcode/optima/optima-filings` | public, AGPLv3 | `compact` | `cssVarPrefix: "optima"` |
+| `optima-cloud-saas` | `~/src/stonedogcode/optima/optima-cloud-saas` | private | `compact` | `cssVarPrefix: "optima"` |
+| RozCards | `~/src/stonedogcode/card-sorter/rozcards` | private | `standard` | **not yet a consumer** — Tailwind v4 today (NEH-255) |
 
 A change that suits one must not regress the others, which is what the
 default-pinning tests are guarding. Note the old names: this package's docs used
@@ -356,7 +357,9 @@ in a visible way, so it wants its own PR and a real look at the result.
 
 The originating product serves an often-elderly, sometimes cognitively-impaired
 audience, and the components carry that: WCAG 2.2 AA is the minimum and AAA the
-aim. Concretely — ≥44×44 CSS px touch targets on anything clickable; never
+aim. Concretely — **≥48×48 CSS px touch targets** on anything clickable (above
+WCAG 2.5.5 AAA's 44, and stated as a `min-height` in the recipes rather than
+left to emerge from padding, so no density or font-scale change can erode it); never
 colour as the only signal; every interactive element reachable and operable by
 keyboard, not just by pointer; correct roles and accessible names, and exactly
 one of each (a duplicated name is its own bug). `StyledTooltip` is worth reading
