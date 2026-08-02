@@ -77,6 +77,20 @@ export function createIntentButton({
       const registered = useIntentIcon(intent);
       const glyph = icon ?? registered;
 
+      /**
+       * Bound to the USER's profile, not the resolved density step (NEH-251).
+       *
+       * The obvious reading of the ladder is "collapse the label when spacing
+       * gets tight", i.e. test `useDensityStep()`. That is wrong, and the
+       * counter-example is Optima: it bases at `compact`, so a user who has
+       * expressed no preference at all resolves to the `compact` rung and every
+       * intent button in the product would silently lose its text.
+       *
+       * Dropping a visible label is a change to what a control *says*. It
+       * should answer "did this user ask for tighter?", which is exactly what
+       * the profile means — it is relative to whatever the app chose. An app
+       * that wants dense spacing has not thereby asked for unlabelled buttons.
+       */
       const isIconOnly = iconOnly ?? density === "compact";
 
       // The label as a string, for the accessible name. A node child cannot be

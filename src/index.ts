@@ -139,9 +139,19 @@ export {
 } from "./config/intent-icons";
 export type { IconIntent, IntentIcons } from "./config/intent-icons";
 
-export { useDensity } from "./config/style-config";
+export { useDensity, useDensityStep } from "./config/style-config";
 export { DENSITY_PROFILES, isDensityProfile } from "./config/types";
 export type { DensityProfile } from "./config/types";
+export {
+  DENSITY_STEPS,
+  DENSITY_BASES,
+  DENSITY_METRICS,
+  densityCustomProperties,
+  isDensityBase,
+  isDensityStep,
+  resolveDensityStep,
+} from "./config/density";
+export type { DensityBase, DensityStep } from "./config/density";
 
 export { default as StyledButton } from "./components/StyledButton";
 export type { StyledButtonProps } from "./components/StyledButton";
