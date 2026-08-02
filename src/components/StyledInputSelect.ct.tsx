@@ -39,10 +39,10 @@ test.describe("StyledInputSelect", () => {
     expect(Math.abs(select.height - text.height)).toBeLessThanOrEqual(2);
   });
 
-  test("clears the 44px target floor", async ({ mount }) => {
+  test("clears the 48px target floor", async ({ mount }) => {
     const component = await mount(<SelectBesideInput />);
     const box = await component.getByTestId("select").boundingBox();
-    expect(box!.height).toBeGreaterThanOrEqual(44);
+    expect(box!.height).toBeGreaterThanOrEqual(48);
   });
 
   test("is reachable and operable by keyboard", async ({ mount, page }) => {

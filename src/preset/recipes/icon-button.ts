@@ -8,6 +8,19 @@ export const buttonIconRecipe = defineRecipe({
     justifyContent: "center",
     borderRadius: "full",
     padding: "calc(.1rem + var(--panda-density-padding, 8px))",
+    /**
+     * The tap-target floor (NEH-220, NEH-251). See `button.ts` for why this is
+     * a stated constant rather than something padding happens to produce.
+     *
+     * It applies to the BASE, so the `size` variants below shrink the padding
+     * and the glyph but not the hit area. That is deliberate and is the whole
+     * point: `size="1x"` exists to make an icon look small in a dense toolbar,
+     * not to make it hard to hit. A 20px control is a WCAG 2.5.5 failure
+     * whatever it is called, and this audience has elevated rates of motor
+     * impairment.
+     */
+    minHeight: "48px",
+    minWidth: "48px",
     _hover: {
       cursor: "pointer",
     },
@@ -22,7 +35,27 @@ export const buttonIconRecipe = defineRecipe({
         padding: "4px",
         fontSize: "0.875rem",
       },
-      md: {},
+      /**
+       * `md` states its font size rather than inheriting (NEH-251).
+       *
+       * It used to be `{}`. That does not mean "the base size" — the base sets
+       * no `font-size`, so a `<button>` fell through to the USER-AGENT
+       * stylesheet, which in Chrome is `13.3333px`. Three consequences, none
+       * of them visible without measuring:
+       *
+       *   - `md` rendered SMALLER than `sm` (13.33px vs 14px), so the size
+       *     scale ran 12, 14, 13.33, 20 — non-monotonic in the middle
+       *   - the default icon button was the one control in the system not
+       *     using the type scale at all
+       *   - it was a px value, so it ignored the browser's own font setting
+       *
+       * Found by the component tier the moment it started asserting glyph size
+       * instead of box size; the old assertion only required two distinct box
+       * heights, which a broken middle satisfies.
+       */
+      md: {
+        fontSize: "1rem",
+      },
       lg: {
         padding: "12px",
         fontSize: "1.25rem",

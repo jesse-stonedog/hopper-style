@@ -103,10 +103,10 @@ describe("input surface parity (NEH-84)", () => {
 });
 
 describe("input surface base (NEH-84)", () => {
-  it("keeps the 44px target size", () => {
+  it("keeps the 48px target size", () => {
     // WCAG 2.5.5 (AAA). Shrinking this is an accessibility regression, not a
     // style choice — see the UX & accessibility floor in CLAUDE.md.
-    expect(inputSurfaceBase.minHeight).toBe("44px");
+    expect(inputSurfaceBase.minHeight).toBe("48px");
   });
 
   it("takes its padding from the density variable", () => {

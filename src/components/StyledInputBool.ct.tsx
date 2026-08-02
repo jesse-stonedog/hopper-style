@@ -8,7 +8,7 @@ import StyledInputBool from "./StyledInputBool";
 
 test.describe("StyledInputBool", () => {
   test("the label is part of the clickable target", async ({ mount, page }) => {
-    // A bare checkbox is ~14×14 CSS px, far under the 44×44 floor (WCAG 2.5.5).
+    // A bare checkbox is ~14×14 CSS px, far under the 48×48 floor (WCAG 2.5.5 AAA is 44; the house floor is 48).
     // Clicking the *text* must toggle it — that is what makes the control
     // usable for someone with a tremor.
     const component = await mount(<StyledInputBool label="Send me email" />);

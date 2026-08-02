@@ -8,6 +8,22 @@ export const buttonRecipe = defineRecipe({
     justifyContent: "center",
     fontWeight: "semibold",
     padding: "calc(.2rem + var(--panda-density-padding, 8px))",
+    /**
+     * The tap-target floor, enforced structurally (NEH-220, NEH-251).
+     *
+     * Until now this recipe set no minimum and the button's size *emerged*
+     * from padding plus the inherited font size. That looked fine and was not:
+     * a short label produced a 42.375px-tall control against a 44px
+     * requirement, and the two component tests asserting the floor were marked
+     * `test.fail()` — the requirement was documented, visible, and unmet.
+     *
+     * Emergent sizing is also fragile in a way a constant is not. The font
+     * scale is host-tunable and just moved (md 1.375rem -> 1rem), which drops
+     * every button that depends on font size for its height. A floor that
+     * survives a typography change has to be stated, not derived.
+     */
+    minHeight: "48px",
+    minWidth: "48px",
     _hover: {
       cursor: "pointer",
     },
