@@ -114,7 +114,8 @@ export default function DictationControls({
         ...vertical,
       }}
     >
-      {dictation.showRedo && dictation.redo && (
+      {/* Suppressed while the continue prompt is up — see `Dictation`. */}
+      {dictation.showRedo && dictation.redo && !dictation.continuePrompt && (
         <ControlButton
           type="button"
           aria-label={redoLabel}

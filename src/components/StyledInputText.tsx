@@ -7,6 +7,7 @@ import { inputTextRecipe } from "styled-system/recipes";
 import { useFontSizeProfile, useResolvedVariant } from "../config/style-config";
 import { fontSizeMap } from "../config/font-size";
 import DictationControls, { dictationPadding } from "./DictationControls";
+import DictationPrompt from "./DictationPrompt";
 import type { Dictation } from "./dictation";
 
 /**
@@ -55,6 +56,10 @@ export interface StyledInputTextProps
   micLabel?: string;
   /** Accessible name for the redo button. */
   redoLabel?: string;
+  /** Wording for the "add or replace?" prompt a second recording raises. */
+  continueQuestion?: string;
+  continueLabel?: string;
+  startOverLabel?: string;
 }
 
 /**
@@ -84,6 +89,9 @@ const StyledInputText = React.forwardRef<HTMLInputElement, StyledInputTextProps>
       dictation,
       micLabel = "Dictate",
       redoLabel = "Record again",
+      continueQuestion = "Add to what you already wrote?",
+      continueLabel = "Continue",
+      startOverLabel = "Start over",
       ...props
     },
     ref,
@@ -111,14 +119,24 @@ const StyledInputText = React.forwardRef<HTMLInputElement, StyledInputTextProps>
     if (!dictation) return field;
 
     return (
-      <div style={{ position: "relative", display: "inline-block", width: "100%" }}>
-        {field}
-        <DictationControls
+      <>
+        <div style={{ position: "relative", display: "inline-block", width: "100%" }}>
+          {field}
+          <DictationControls
+            dictation={dictation}
+            micLabel={micLabel}
+            redoLabel={redoLabel}
+          />
+        </div>
+        {/* Below the field, outside the positioned wrapper — it is a question,
+            not an affordance. */}
+        <DictationPrompt
           dictation={dictation}
-          micLabel={micLabel}
-          redoLabel={redoLabel}
+          question={continueQuestion}
+          continueLabel={continueLabel}
+          startOverLabel={startOverLabel}
         />
-      </div>
+      </>
     );
   },
 );

@@ -172,3 +172,4 @@ export { INPUT_TEXT_VARIANTS } from "./components/StyledInputText";
 
 export { default as StyledInputTextArea } from "./components/StyledInputTextArea";
 export type { StyledInputTextAreaProps } from "./components/StyledInputTextArea";
+export { default as DictationPrompt } from "./components/DictationPrompt";

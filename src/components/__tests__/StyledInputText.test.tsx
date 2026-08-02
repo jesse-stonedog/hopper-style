@@ -148,6 +148,86 @@ describe.each(FIELDS)("$name", ({ Field, tag }) => {
     });
   });
 
+  describe("the continue prompt — a second recording must not silently replace", () => {
+    const multi = (over = {}) =>
+      adapter({
+        continuePrompt: true,
+        chooseContinue: jest.fn(),
+        chooseStartOver: jest.fn(),
+        ...over,
+      });
+
+    it("is absent until raised", () => {
+      render(withIcons(<Field dictation={adapter()} />));
+      expect(screen.queryByTestId("dictation-continue-prompt")).toBeNull();
+    });
+
+    it("asks rather than guessing", () => {
+      // Overwriting a paragraph because someone pressed the mic twice is data
+      // loss, not a preference.
+      render(withIcons(<Field dictation={multi()} />));
+      expect(screen.getByTestId("dictation-continue-prompt")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Continue" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Start over" })).toBeInTheDocument();
+    });
+
+    it("offers the non-destructive answer first", () => {
+      // Reading and tab order both reach Continue before Start over.
+      render(withIcons(<Field dictation={multi()} />));
+      const buttons = screen.getAllByRole("button").map((b) => b.textContent);
+      expect(buttons.indexOf("Continue")).toBeLessThan(buttons.indexOf("Start over"));
+    });
+
+    it("is announced as a named group", () => {
+      render(withIcons(<Field dictation={multi()} />));
+      expect(
+        screen.getByRole("group", { name: "Add to what you already wrote?" }),
+      ).toBeInTheDocument();
+    });
+
+    it("calls chooseContinue", () => {
+      const chooseContinue = jest.fn();
+      render(withIcons(<Field dictation={multi({ chooseContinue })} />));
+      fireEvent.click(screen.getByTestId("dictation-continue"));
+      expect(chooseContinue).toHaveBeenCalledTimes(1);
+    });
+
+    it("calls chooseStartOver", () => {
+      const chooseStartOver = jest.fn();
+      render(withIcons(<Field dictation={multi({ chooseStartOver })} />));
+      fireEvent.click(screen.getByTestId("dictation-start-over"));
+      expect(chooseStartOver).toHaveBeenCalledTimes(1);
+    });
+
+    it("suppresses redo while the prompt is up", () => {
+      // Three competing choices about the same text is not a decision anyone
+      // makes quickly.
+      render(withIcons(<Field dictation={multi({ showRedo: true, redo: jest.fn() })} />));
+      expect(screen.getByTestId("dictation-continue-prompt")).toBeInTheDocument();
+      expect(screen.queryByTestId("dictation-redo")).toBeNull();
+    });
+
+    it("stays absent when the handlers are missing", () => {
+      render(withIcons(<Field dictation={adapter({ continuePrompt: true })} />));
+      expect(screen.queryByTestId("dictation-continue-prompt")).toBeNull();
+    });
+
+    it("takes custom wording, for localisation", () => {
+      render(
+        withIcons(
+          <Field
+            dictation={multi()}
+            continueQuestion="Zum Text hinzufügen?"
+            continueLabel="Weiter"
+            startOverLabel="Neu"
+          />,
+        ),
+      );
+      expect(screen.getByRole("group", { name: "Zum Text hinzufügen?" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Weiter" })).toBeInTheDocument();
+    });
+  });
+
   describe("room for the buttons", () => {
     const padOf = (ui: React.ReactElement) => {
       const { container } = render(ui);

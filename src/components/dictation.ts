@@ -50,4 +50,22 @@ export interface Dictation {
   onMicClick: () => void;
   /** Discard the last result and record again. Required when `showRedo`. */
   redo?: () => void;
+
+  /**
+   * Ask what a new recording should do to text that is already there.
+   *
+   * Only meaningful for multi-entry fields, where prose is written in passes.
+   * Overwriting someone's paragraph because they pressed the mic a second time
+   * is a data-loss bug, not a UX preference — so when the host raises this, the
+   * field stops and asks instead of guessing.
+   *
+   * Requires `chooseContinue` and `chooseStartOver`. While it is raised the
+   * redo button is suppressed: three competing choices about the same text is
+   * not a decision anyone can make quickly.
+   */
+  continuePrompt?: boolean;
+  /** Append the new recording to what is already there. */
+  chooseContinue?: () => void;
+  /** Replace what is already there. */
+  chooseStartOver?: () => void;
 }
