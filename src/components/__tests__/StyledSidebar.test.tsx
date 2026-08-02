@@ -25,6 +25,22 @@ function renderSidebar(props: Partial<React.ComponentProps<typeof StyledSidebar>
   return { onSelect, ...utils };
 }
 
+describe("StyledSidebar — landmark", () => {
+  it("renders a named navigation landmark", () => {
+    // Regression: this was `as="nav"` on StyledBox, which does not reach the
+    // DOM through Panda's factory — so the sidebar rendered a plain div with
+    // an aria-label naming nothing, and screen-reader users had no landmark to
+    // jump to. Every behaviour test still passed.
+    render(<StyledSidebar items={TOOLS} onSelect={jest.fn()} aria-label="Care Tools" />);
+    expect(screen.getByRole("navigation", { name: "Care Tools" })).toBeInTheDocument();
+  });
+
+  it("defaults the landmark name when the host gives none", () => {
+    render(<StyledSidebar items={TOOLS} onSelect={jest.fn()} />);
+    expect(screen.getByRole("navigation", { name: "Tools" })).toBeInTheDocument();
+  });
+});
+
 describe("StyledSidebar — items", () => {
   it("renders every tool with its name, not an icon alone", () => {
     renderSidebar();
