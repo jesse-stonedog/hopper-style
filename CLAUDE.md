@@ -1,4 +1,4 @@
-# hopper-style — a portable Panda CSS design system
+# stonedog-style — a portable Panda CSS design system
 
 **Repo tier.** Machine-wide conventions (branching, PR rules, the Linear
 protocol, Node/nvm) live in `~/.claude/CLAUDE.md` and apply here as written.
@@ -16,8 +16,8 @@ different companies and licensed differently. It is two things in one package:
 
 | Entry point | What it is | Who imports it |
 |---|---|---|
-| `hopper-style/preset` | A **Panda CSS preset** — colour tokens, breakpoints, and 22 recipes | the consumer's `panda.config.ts`, at build time in Node |
-| `hopper-style` | The **React components** built on those recipes | application code |
+| `stonedog-style/preset` | A **Panda CSS preset** — colour tokens, breakpoints, and 22 recipes | the consumer's `panda.config.ts`, at build time in Node |
+| `stonedog-style` | The **React components** built on those recipes | application code |
 
 They are separate entry points on purpose: the config runs in Node during the
 build, and dragging the whole component tree (and React with it) into that
@@ -26,6 +26,31 @@ context buys nothing.
 Extracted from HopperGuard's `apps/web/src/app/components/Styled/`. That app
 remains the largest consumer and the de-facto reference for how a component
 should behave.
+
+### Renamed from `hopper-style` — migration in progress (NEH-251)
+
+The package is `stonedog-style`. Every `hopper*` public symbol still exists as a
+**deprecated alias** re-exported alongside the new name:
+
+| Old | New |
+|---|---|
+| `hopperStylePreset` | `stonedogStylePreset` |
+| `HopperStylePresetOptions` | `StonedogStylePresetOptions` |
+| `hopperStyleRecipes` | `stonedogStyleRecipes` |
+| `HopperStyleProvider` | `StonedogStyleProvider` |
+| `HopperStyleProviderProps` | `StonedogStyleProviderProps` |
+
+The aliases exist so each consumer can bump its submodule pointer on its own
+schedule instead of every repo moving in one lockstep sweep — that is what makes
+NEH-251 shippable as ordered PRs. **They are a migration seam with an end date.**
+Delete them once HopperGuard, optima-filings and optima-cloud-saas have all
+landed their consumer PRs; new code must never reach for one.
+
+**`DEFAULT_CSS_VAR_PREFIX` is deliberately still `"hopper"`.** Renaming it
+re-points all 44 custom properties, and HopperGuard's theme data — stored in its
+database and edited through its theme editor — keys off `--hopper-*`. Flipping
+it would blank every colour in that app with no build error. That is a data
+migration, not a rename, and it is not part of NEH-251.
 
 ## The one idea everything else follows from
 
@@ -61,7 +86,7 @@ src/
     semantic-variables.ts  the token contract: token name → CSS custom property
     recipes/               22 Panda recipes; the visual definition of everything
   config/
-    style-config.tsx       HopperStyleProvider / useStyleConfig / useResolvedVariant
+    style-config.tsx       StonedogStyleProvider / useStyleConfig / useResolvedVariant
     logger.ts              the injectable logger (no-op by default)
     font-size.ts           the rem-based type scale
     types.ts               variant + font-size + icon-size vocabularies
@@ -87,7 +112,7 @@ sets one, and both halves are host-tunable already:
 
 - **Font size** via the `--font-sizes-*` custom properties, since every
   `fontSizeMap` entry is `var(--font-sizes-KEY, <fallback>)`.
-- **Icon size** via `iconSize` on `StyleConfig` / `HopperStyleProvider`
+- **Icon size** via `iconSize` on `StyleConfig` / `StonedogStyleProvider`
   (NEH-200). `StyledIcon` resolves caller → app-wide → `2x`, the same precedence
   shape as `useResolvedVariant` and for the same reason: when each call site
   picks its own default, an app quietly grows several scales at once.
@@ -97,10 +122,20 @@ sets one, and both halves are host-tunable already:
 config would be a cycle. `StyledIcon` re-exports the type so the older import
 path keeps working.
 
-There are now **three consumers** — HopperGuard, `maximus-compliance` (public,
-AGPLv3), and `maximus-cloud-saas` (private). The two Maximus products run
-standard sizing; HopperGuard runs large. A change that suits one must not
-regress the others, which is what the default-pinning tests are guarding.
+### The consumers
+
+| Repo | On disk | Visibility | Sizing |
+|---|---|---|---|
+| HopperGuard (`hopper-web`) | `~/src/elderlink/hopperguard`, submodule `packages/stonedog-style` | private | large (elder audience) |
+| `optima-filings` | `~/src/stonedogcode/optima/optima-filings` | public, AGPLv3 | standard, `cssVarPrefix: "optima"` |
+| `optima-cloud-saas` | `~/src/stonedogcode/optima/optima-cloud-saas` | private | standard, `cssVarPrefix: "optima"` |
+| RozCards | `~/src/stonedogcode/card-sorter/rozcards` | private | **not yet a consumer** — Tailwind v4 today, adoption tracked separately |
+
+A change that suits one must not regress the others, which is what the
+default-pinning tests are guarding. Note the old names: this package's docs used
+to call the Optima repos `maximus-compliance` / `maximus-cloud-saas`, and the
+npm scope inside them is still `@maximus/*` (NEH-238, sequenced behind trademark
+clearance). The *repos* are `optima-*`.
 
 ## How a consumer wires this up
 
@@ -110,7 +145,7 @@ Four steps. Steps 2 and 3 are the ones that get missed.
 
 ```ts
 import { defineConfig } from "@pandacss/dev";
-import { hopperStylePreset } from "hopper-style/preset";
+import { stonedogStylePreset } from "stonedog-style/preset";
 
 export default defineConfig({
   // Listing `presets` REPLACES Panda's defaults — it does not add to them.
@@ -120,11 +155,11 @@ export default defineConfig({
   presets: [
     "@pandacss/preset-base",
     "@pandacss/preset-panda",
-    hopperStylePreset(),          // or hopperStylePreset({ cssVarPrefix: "acme" })
+    stonedogStylePreset(),          // or stonedogStylePreset({ cssVarPrefix: "acme" })
   ],
   include: [
     "./src/**/*.{ts,tsx}",
-    "./node_modules/hopper-style/src/**/*.tsx",  // ← step 2
+    "./node_modules/stonedog-style/src/**/*.tsx",  // ← step 2
   ],
   outdir: "styled-system",
   jsxFramework: "react",
@@ -136,14 +171,14 @@ statically parsing source files. A package it never parses contributes no CSS,
 and its components render with class names that have no rules behind them.
 
 **3. Transpile the package.** It ships TypeScript source, not a bundle. In
-Next.js: `transpilePackages: ["hopper-style"]`.
+Next.js: `transpilePackages: ["stonedog-style"]`.
 
 **4. Define the custom properties and mount the provider:**
 
 ```tsx
-<HopperStyleProvider fontSizeProfile={profile} variant={variant}>
+<StonedogStyleProvider fontSizeProfile={profile} variant={variant}>
   <App />
-</HopperStyleProvider>
+</StonedogStyleProvider>
 ```
 
 The provider is optional — omitting it yields readable defaults — but the custom

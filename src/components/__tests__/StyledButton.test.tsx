@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import StyledButton from "../StyledButton";
-import { HopperStyleProvider } from "../../config/style-config";
+import { StonedogStyleProvider } from "../../config/style-config";
 import { ALL_VARIANTS } from "../../config/types";
 
 describe("StyledButton", () => {
@@ -45,9 +45,9 @@ describe("StyledButton", () => {
 
     it("falls back to the app-wide variant when the caller gives none", () => {
       render(
-        <HopperStyleProvider variant="matte">
+        <StonedogStyleProvider variant="matte">
           <StyledButton>Go</StyledButton>
-        </HopperStyleProvider>,
+        </StonedogStyleProvider>,
       );
       expect(screen.getByRole("button")).toHaveAttribute(
         "data-panda-variant",
@@ -57,9 +57,9 @@ describe("StyledButton", () => {
 
     it("lets the caller override the app-wide variant", () => {
       render(
-        <HopperStyleProvider variant="matte">
+        <StonedogStyleProvider variant="matte">
           <StyledButton variant="ghost">Go</StyledButton>
-        </HopperStyleProvider>,
+        </StonedogStyleProvider>,
       );
       expect(screen.getByRole("button")).toHaveAttribute(
         "data-panda-variant",

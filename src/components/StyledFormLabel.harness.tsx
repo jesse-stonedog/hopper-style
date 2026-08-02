@@ -1,7 +1,7 @@
 import React from "react";
 import StyledFormLabel from "./StyledFormLabel";
 import StyledText from "./StyledText";
-import { HopperStyleProvider } from "../config/style-config";
+import { StonedogStyleProvider } from "../config/style-config";
 
 /**
  * Mount targets for `StyledFormLabel.ct.tsx` (NEH-233).
@@ -15,12 +15,12 @@ import { HopperStyleProvider } from "../config/style-config";
 export function SizedLabels() {
   return (
     <div>
-      <HopperStyleProvider fontSizeProfile="sm">
+      <StonedogStyleProvider fontSizeProfile="sm">
         <StyledFormLabel data-testid="label-sm">Email address</StyledFormLabel>
-      </HopperStyleProvider>
-      <HopperStyleProvider fontSizeProfile="xl">
+      </StonedogStyleProvider>
+      <StonedogStyleProvider fontSizeProfile="xl">
         <StyledFormLabel data-testid="label-xl">Email address</StyledFormLabel>
-      </HopperStyleProvider>
+      </StonedogStyleProvider>
     </div>
   );
 }
@@ -28,11 +28,11 @@ export function SizedLabels() {
 /** A label next to ordinary body text, at the large default profile. */
 export function LabelBesideText() {
   return (
-    <HopperStyleProvider fontSizeProfile="md">
+    <StonedogStyleProvider fontSizeProfile="md">
       <div>
         <StyledFormLabel data-testid="label">Email address</StyledFormLabel>
         <StyledText data-testid="body">We only use this to reach you.</StyledText>
       </div>
-    </HopperStyleProvider>
+    </StonedogStyleProvider>
   );
 }

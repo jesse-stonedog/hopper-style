@@ -130,7 +130,7 @@ export function createSemanticSizes(
  * `hopper` rather than something neutral because HopperGuard's theme engine
  * already emits `--hopper-*` and a rename there would be a coordinated change
  * across a running product's stored theme data. A second consumer that wants
- * its own namespace passes `cssVarPrefix` — see `hopperStylePreset`.
+ * its own namespace passes `cssVarPrefix` — see `stonedogStylePreset`.
  */
 export const DEFAULT_CSS_VAR_PREFIX = "hopper";
 

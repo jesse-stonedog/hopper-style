@@ -1,7 +1,7 @@
 import { renderHook } from "@testing-library/react";
 import React from "react";
 import {
-  HopperStyleProvider,
+  StonedogStyleProvider,
   useIconSize,
   useResolvedVariant,
   useStyleConfig,
@@ -12,7 +12,7 @@ import {
 /** A provider wrapper preset with the given (partial) settings. */
 function withConfig(config: Partial<StyleConfig>) {
   return function ConfigWrapper({ children }: { children: React.ReactNode }) {
-    return <HopperStyleProvider {...config}>{children}</HopperStyleProvider>;
+    return <StonedogStyleProvider {...config}>{children}</StonedogStyleProvider>;
   };
 }
 

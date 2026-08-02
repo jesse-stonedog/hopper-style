@@ -1,5 +1,5 @@
 /**
- * hopper-style — public API.
+ * stonedog-style — public API.
  *
  * Components are exported both as named exports and, individually, as default
  * exports from their own module. Prefer the named export; the default exports
@@ -9,14 +9,14 @@
  * The Panda preset is NOT re-exported here. It is imported by the consumer's
  * `panda.config.ts`, which runs in Node at build time, and pulling the whole
  * component tree (and React with it) into that context is a needless cost —
- * hence the separate `hopper-style/preset` entry point.
+ * hence the separate `stonedog-style/preset` entry point.
  */
 
 // ---------------------------------------------------------------------------
 // Configuration seam — what a host application must wire up.
 // ---------------------------------------------------------------------------
 export {
-  HopperStyleProvider,
+  StonedogStyleProvider,
   useStyleConfig,
   useFontSizeProfile,
   useIconSize,
@@ -25,8 +25,15 @@ export {
 } from "./config/style-config";
 export type {
   StyleConfig,
-  HopperStyleProviderProps,
+  StonedogStyleProviderProps,
 } from "./config/style-config";
+
+/**
+ * Deprecated `Hopper*` aliases — NEH-251. See `config/style-config.tsx`.
+ * Removed once every consumer has landed its rename PR.
+ */
+export { HopperStyleProvider } from "./config/style-config";
+export type { HopperStyleProviderProps } from "./config/style-config";
 
 export { setStyleLogger } from "./config/logger";
 export type { StyleLogger } from "./config/logger";

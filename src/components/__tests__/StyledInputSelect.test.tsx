@@ -2,7 +2,7 @@ import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import StyledInputSelect from "../StyledInputSelect";
 import StyledSearch from "../StyledSearch";
-import { HopperStyleProvider } from "../../config/style-config";
+import { StonedogStyleProvider } from "../../config/style-config";
 
 const OPTIONS = [
   { value: "wa", label: "Washington" },
@@ -83,7 +83,7 @@ describe("StyledInputSelect", () => {
   });
 
   it("submits by name, with no JavaScript involved", () => {
-    // Why native matters for maximus: its forms are server actions. A custom
+    // Why native matters for optima-filings: its forms are server actions. A custom
     // dropdown would need a hidden mirror input whose only job is to undo the
     // decision to be custom.
     render(
@@ -122,9 +122,9 @@ describe("StyledInputSelect", () => {
 
     it("inherits the app-wide variant", () => {
       const { container } = render(
-        <HopperStyleProvider variant="matte">
+        <StonedogStyleProvider variant="matte">
           <StyledInputSelect />
-        </HopperStyleProvider>,
+        </StonedogStyleProvider>,
       );
       expect((container.querySelector("select") as HTMLElement).className).toBe(
         classOf(<StyledInputSelect variant="matte" />),
@@ -183,13 +183,13 @@ describe("StyledSearch", () => {
 
   it("renders one when given", () => {
     render(
-      <HopperStyleProvider icons={{ dictate: <svg /> }}>
+      <StonedogStyleProvider icons={{ dictate: <svg /> }}>
         <StyledSearch
           search=""
           onSearchChange={() => {}}
           dictation={{ isSupported: true, isListening: false, onMicClick: jest.fn() }}
         />
-      </HopperStyleProvider>,
+      </StonedogStyleProvider>,
     );
     expect(screen.getByTestId("dictation-mic")).toBeInTheDocument();
   });

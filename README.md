@@ -1,4 +1,4 @@
-# hopper-style
+# stonedog-style
 
 A themeable [Panda CSS](https://panda-css.com) design system: a preset of design
 tokens and recipes, plus the React components built on them.
@@ -24,12 +24,12 @@ submodule if you want to develop against it:
 
 ```bash
 # Option A — git dependency, pinned to a commit
-npm install "git+https://github.com/jesse-stonedog/hopper-style.git#<sha>"
+npm install "git+https://github.com/jesse-stonedog/stonedog-style.git#<sha>"
 
 # Option B — submodule + file: dependency (use this in a monorepo)
-git submodule add git@github.com:jesse-stonedog/hopper-style.git packages/hopper-style
+git submodule add git@github.com:jesse-stonedog/stonedog-style.git packages/stonedog-style
 #   then in the consuming app's package.json:
-#   "hopper-style": "file:../../packages/hopper-style"
+#   "stonedog-style": "file:../../packages/stonedog-style"
 ```
 
 Pin to a commit rather than tracking a branch: this package ships source that
@@ -47,7 +47,7 @@ but invisibly or unstyled, with no error anywhere to tell you why.
 
 ```ts
 import { defineConfig } from "@pandacss/dev";
-import { hopperStylePreset } from "hopper-style/preset";
+import { stonedogStylePreset } from "stonedog-style/preset";
 
 export default defineConfig({
   // Listing `presets` REPLACES Panda's defaults rather than adding to them,
@@ -56,13 +56,13 @@ export default defineConfig({
   presets: [
     "@pandacss/preset-base",
     "@pandacss/preset-panda",
-    hopperStylePreset(),
+    stonedogStylePreset(),
   ],
   include: [
     "./src/**/*.{ts,tsx}",
     // Panda finds styles by parsing source. A package it never parses
     // contributes no CSS, and its components render unstyled.
-    "./node_modules/hopper-style/src/**/*.tsx",
+    "./node_modules/stonedog-style/src/**/*.tsx",
   ],
   outdir: "styled-system",
   jsxFramework: "react",
@@ -74,7 +74,7 @@ because Panda extracts styles statically at *your* build. In Next.js:
 
 ```js
 // next.config.js
-module.exports = { transpilePackages: ["hopper-style"] };
+module.exports = { transpilePackages: ["stonedog-style"] };
 ```
 
 **3 — define the custom properties. This is the step that bites.** Every colour
@@ -85,10 +85,10 @@ serves, and shows you a blank page.
 There are **44** of them. Get the list at runtime rather than copying one:
 
 ```ts
-import { requiredCssCustomProperties } from "hopper-style/preset";
+import { requiredCssCustomProperties } from "stonedog-style/preset";
 
 requiredCssCustomProperties();           // --hopper-* (default)
-requiredCssCustomProperties("maximus");  // --maximus-*, if you set cssVarPrefix
+requiredCssCustomProperties("optima");   // --optima-*, if you set cssVarPrefix
 ```
 
 A complete starter theme — all 44, nothing elided. Dark, and every text/surface
@@ -178,11 +178,11 @@ One optional extra, not in that list because it has a working fallback:
 **4 — mount the provider** (optional; omitting it gives readable defaults):
 
 ```tsx
-import { HopperStyleProvider } from "hopper-style";
+import { StonedogStyleProvider } from "stonedog-style";
 
-<HopperStyleProvider fontSizeProfile="md" variant="solid">
+<StonedogStyleProvider fontSizeProfile="md" variant="solid">
   <App />
-</HopperStyleProvider>;
+</StonedogStyleProvider>;
 ```
 
 ### Check it actually worked
@@ -211,7 +211,7 @@ If all three pass and the UI is still blank, you are missing step 3.
 ## Use
 
 ```tsx
-import { StyledBox, StyledHeading, StyledText, StyledVStack } from "hopper-style";
+import { StyledBox, StyledHeading, StyledText, StyledVStack } from "stonedog-style";
 
 export function Panel() {
   return (
@@ -250,7 +250,7 @@ The defaults lean large on purpose, and both halves are host-tunable without
 forking anything:
 
 ```tsx
-<HopperStyleProvider fontSizeProfile="md" iconSize="md" variant="solid">
+<StonedogStyleProvider fontSizeProfile="md" iconSize="md" variant="solid">
 ```
 
 ```css
@@ -273,7 +273,7 @@ Because an icon set built with `createIcon` names no size of its own, setting
 namespace at build time:
 
 ```ts
-hopperStylePreset({ cssVarPrefix: "acme" }); // → var(--acme-box-primary-bg)
+stonedogStylePreset({ cssVarPrefix: "acme" }); // → var(--acme-box-primary-bg)
 ```
 
 The rename is total — every token re-points, and no `--hopper-*` reference
@@ -287,7 +287,7 @@ paths; nothing else here is optional.
 
 ```bash
 # 1. Take the dependency (see Install — it is not on npm)
-npm install "git+https://github.com/jesse-stonedog/hopper-style.git#<sha>"
+npm install "git+https://github.com/jesse-stonedog/stonedog-style.git#<sha>"
 npm install -D @pandacss/dev @types/react @types/react-dom
 ```
 
@@ -297,20 +297,20 @@ and without the types your build fails on our source, not yours.
 ```ts
 // 2. panda.config.ts — all four points below matter
 import { defineConfig } from "@pandacss/dev";
-import { hopperStylePreset } from "hopper-style/preset";
+import { stonedogStylePreset } from "stonedog-style/preset";
 
 export default defineConfig({
   preflight: false,
   presets: [
     "@pandacss/preset-base",   // (a) REQUIRED — presets replaces, not merges
     "@pandacss/preset-panda",  // (b) REQUIRED — gray.*, radii, spacing
-    hopperStylePreset({ cssVarPrefix: "acme" }),
+    stonedogStylePreset({ cssVarPrefix: "acme" }),
   ],
   include: [
     "./src/**/*.{ts,tsx}",
-    "./node_modules/hopper-style/src/**/*.tsx",  // (c) REQUIRED
+    "./node_modules/stonedog-style/src/**/*.tsx",  // (c) REQUIRED
   ],
-  exclude: ["./node_modules/hopper-style/src/**/__tests__/**/*"],  // (d)
+  exclude: ["./node_modules/stonedog-style/src/**/__tests__/**/*"],  // (d)
   outdir: "styled-system",
   jsxFramework: "react",
 });
@@ -334,13 +334,13 @@ export default defineConfig({
 ```tsx
 // 4. Your root — theme first, then the provider
 import "./theme.css";                 // the 44 properties, from step 3 above
-import { HopperStyleProvider } from "hopper-style";
+import { StonedogStyleProvider } from "stonedog-style";
 
 export function Root({ children }) {
   return (
-    <HopperStyleProvider fontSizeProfile="md" variant="solid">
+    <StonedogStyleProvider fontSizeProfile="md" variant="solid">
       {children}
-    </HopperStyleProvider>
+    </StonedogStyleProvider>
   );
 }
 ```
@@ -372,7 +372,7 @@ Silent by default — a component that renders a few hundred times a second must
 not decide your console should fill up. Opt in at startup:
 
 ```ts
-import { setStyleLogger } from "hopper-style";
+import { setStyleLogger } from "stonedog-style";
 setStyleLogger(myLogger); // trace / debug / info / warn / error
 ```
 
@@ -385,7 +385,7 @@ Heroicons, Font Awesome, Material Symbols, your designer's SVGs — all equally
 supported, and you can mix them.
 
 ```tsx
-import { StyledIcon } from "hopper-style";
+import { StyledIcon } from "stonedog-style";
 import { Home } from "lucide-react";
 
 <StyledIcon icon={<Home />} size="lg" />;
@@ -399,7 +399,7 @@ how a set drifts — one forgets to forward `size`, another hardcodes a colour.
 
 ```tsx
 // icons.tsx — your own module, in your own repo
-import { createIcon, createIconFromComponent } from "hopper-style";
+import { createIcon, createIconFromComponent } from "stonedog-style";
 import { Home, Trash2 } from "lucide-react";
 
 export const StyledHome  = createIcon("StyledHome", <Home />);
@@ -477,7 +477,7 @@ than waiting for a big-bang switch.
 ### Find out what is available
 
 ```bash
-git -C packages/hopper-style log --oneline main   # what has landed
+git -C packages/stonedog-style log --oneline main   # what has landed
 ```
 
 Every migration commit is `feat: migrate StyledX`. The commit body is the real
@@ -492,7 +492,7 @@ The app already consumes this package, so adopting a component is a pointer bump
 plus a decision about the local file.
 
 ```bash
-git -C packages/hopper-style checkout main && git -C packages/hopper-style pull
+git -C packages/stonedog-style checkout main && git -C packages/stonedog-style pull
 ```
 
 Then, for `apps/web/src/app/components/Styled/StyledX.tsx`:
@@ -501,8 +501,8 @@ Then, for `apps/web/src/app/components/Styled/StyledX.tsx`:
 Call sites stay untouched:
 
 ```tsx
-export { StyledX as default, StyledX } from "hopper-style";
-export type { StyledXProps } from "hopper-style";
+export { StyledX as default, StyledX } from "stonedog-style";
+export type { StyledXProps } from "stonedog-style";
 ```
 
 **If the app needs behaviour the shared one deliberately does not have**, keep a
@@ -515,22 +515,23 @@ pretend to be one.
 Then two PRs, in this order — the submodule pointer must be on `main` before the
 app can resolve it:
 
-1. **hopperguard** — bump the `packages/hopper-style` gitlink.
+1. **hopperguard** — bump the `packages/stonedog-style` gitlink.
 2. **hopper-web** — swap the local file.
 3. **hopperguard** — bump the `apps/web` gitlink.
 
-### maximus-compliance / maximus-cloud-saas
+### optima-filings / optima-cloud-saas
 
 Nothing to unpick — these have no local copy to replace. Take the dependency
 (see Install), then import:
 
 ```tsx
-import { StyledSpinner } from "hopper-style";
+import { StyledSpinner } from "stonedog-style";
 ```
 
-`maximus-compliance` is public and AGPLv3 and ships a public Docker image, so it
-uses a **permissive icon set** through the icon seam rather than the private
-Font Awesome package. Everything else is shared.
+`optima-filings` is public and AGPLv3 and ships a public Docker image, so it
+uses a **permissive icon set** (Lucide) through the icon seam rather than the
+private Font Awesome package. Everything else is shared. Both Optima repos run
+their own `--optima-*` namespace via `cssVarPrefix` (NEH-170).
 
 ### Verify — the three checks that actually catch things
 

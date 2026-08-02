@@ -15,7 +15,7 @@ import { useIntentIcon, type IconIntent } from "../config/intent-icons";
  *
  * The icon comes from the **intent registry**, not from a prop, so this package
  * ships no artwork and each host supplies its own set — Font Awesome in
- * HopperGuard, Lucide in maximus-compliance. A per-call-site `icon` prop still
+ * HopperGuard, Lucide in optima-filings. A per-call-site `icon` prop still
  * wins for the rare one-off.
  *
  * ## Compact density drops the label — and that used to lose the name

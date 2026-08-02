@@ -33,12 +33,12 @@ import {
   createSemanticSizes,
 } from "./semantic-variables";
 
-export interface HopperStylePresetOptions {
+export interface StonedogStylePresetOptions {
   /**
    * Namespace for the CSS custom properties the colour tokens read.
    *
-   * `"hopper"` yields `var(--hopper-box-primary-bg)`; `"maximus"` yields
-   * `var(--maximus-box-primary-bg)`. Only change this if the host application
+   * `"hopper"` yields `var(--hopper-box-primary-bg)`; `"optima"` yields
+   * `var(--optima-box-primary-bg)`. Only change this if the host application
    * emits its theme under a different namespace — the value must match whatever
    * writes those properties at runtime, and a mismatch renders every colour as
    * nothing at all (see semantic-variables.ts).
@@ -98,18 +98,18 @@ const staticCssRecipes = Object.fromEntries(
 ) as Record<keyof typeof recipes, ["*"]>;
 
 /**
- * The hopper-style Panda preset: colour tokens, breakpoints, keyframes, and the
- * 22 recipes the component library is built on.
+ * The stonedog-style Panda preset: colour tokens, breakpoints, keyframes, and
+ * the 22 recipes the component library is built on.
  *
  * Deliberately does NOT set `globalCss`, `preflight`, `include`, or `outdir` —
  * those are application decisions, and a preset that quietly restyles `body` is
  * a preset that is hard to adopt. The consuming app owns them. See CLAUDE.md.
  */
-export function hopperStylePreset(options: HopperStylePresetOptions = {}) {
+export function stonedogStylePreset(options: StonedogStylePresetOptions = {}) {
   const { cssVarPrefix = DEFAULT_CSS_VAR_PREFIX } = options;
 
   return definePreset({
-    name: "hopper-style",
+    name: "stonedog-style",
     theme: {
       extend: {
         /**
@@ -147,7 +147,7 @@ export function hopperStylePreset(options: HopperStylePresetOptions = {}) {
           // The disabled strike-through on StyledInputToggle. A keyframe rather
           // than a transition because it plays once on appearance, and there is
           // no "before" state to transition from.
-          hopperStrikeIn: {
+          stonedogStrikeIn: {
             "0%": { transform: "scaleX(0)" },
             "100%": { transform: "scaleX(1)" },
           },
@@ -171,4 +171,26 @@ export {
   requiredCssCustomProperties,
 } from "./semantic-variables";
 
+export { recipes as stonedogStyleRecipes };
+
+/* ------------------------------------------------------------------------- *
+ * Deprecated `hopper*` aliases — NEH-251.
+ *
+ * The package renamed hopper-style → stonedog-style. These re-exports exist so
+ * each consumer can bump its submodule pointer on its own schedule instead of
+ * every repo having to move in one lockstep sweep, which is what would make an
+ * ordered set of PRs impossible.
+ *
+ * They are a migration seam with an end date, not a compatibility promise.
+ * Remove them once HopperGuard, optima-filings and optima-cloud-saas have all
+ * landed their consumer PRs.
+ * ------------------------------------------------------------------------- */
+
+/** @deprecated Renamed to `stonedogStylePreset`. Removed once every consumer has migrated (NEH-251). */
+export const hopperStylePreset = stonedogStylePreset;
+
+/** @deprecated Renamed to `StonedogStylePresetOptions`. Removed once every consumer has migrated (NEH-251). */
+export type HopperStylePresetOptions = StonedogStylePresetOptions;
+
+/** @deprecated Renamed to `stonedogStyleRecipes`. Removed once every consumer has migrated (NEH-251). */
 export { recipes as hopperStyleRecipes };

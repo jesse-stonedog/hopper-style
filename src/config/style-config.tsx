@@ -91,7 +91,7 @@ type OptionalStyleConfig = {
   [K in keyof StyleConfig]?: StyleConfig[K] | undefined;
 };
 
-export interface HopperStyleProviderProps extends OptionalStyleConfig {
+export interface StonedogStyleProviderProps extends OptionalStyleConfig {
   children: React.ReactNode;
   /**
    * Which icon to draw for each intent — see `config/intent-icons.tsx`.
@@ -111,22 +111,22 @@ export interface HopperStyleProviderProps extends OptionalStyleConfig {
  * store can pass literals, or omit the provider entirely and take the defaults.
  *
  * ```tsx
- * <HopperStyleProvider fontSizeProfile={profile} variant={variant}>
+ * <StonedogStyleProvider fontSizeProfile={profile} variant={variant}>
  *   <App />
- * </HopperStyleProvider>
+ * </StonedogStyleProvider>
  * ```
  *
  * Props are merged over the defaults individually, so a host that only cares
  * about font size does not have to name a variant it has no opinion on.
  */
-export function HopperStyleProvider({
+export function StonedogStyleProvider({
   children,
   fontSizeProfile,
   variant,
   iconSize,
   density,
   icons,
-}: HopperStyleProviderProps) {
+}: StonedogStyleProviderProps) {
   const value = useMemo<StyleConfig>(
     () => ({
       fontSizeProfile:
@@ -149,6 +149,18 @@ export function HopperStyleProvider({
     </StyleConfigContext.Provider>
   );
 }
+
+/**
+ * @deprecated Renamed to `StonedogStyleProvider` (NEH-251).
+ *
+ * Kept so each consumer can bump its submodule pointer on its own schedule
+ * rather than every repo moving in one lockstep sweep. Removed once HopperGuard,
+ * optima-filings and optima-cloud-saas have all landed their consumer PRs.
+ */
+export const HopperStyleProvider = StonedogStyleProvider;
+
+/** @deprecated Renamed to `StonedogStyleProviderProps` (NEH-251). */
+export type HopperStyleProviderProps = StonedogStyleProviderProps;
 
 /** The current styling settings. Safe outside a provider — returns defaults. */
 export function useStyleConfig(): StyleConfig {

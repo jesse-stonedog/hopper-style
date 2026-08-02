@@ -89,7 +89,7 @@ const StrikeThrough = styled("div", {
     backgroundColor: "currentColor",
     transformOrigin: "center",
     transform: "scaleX(1)",
-    animation: "hopperStrikeIn 200ms ease-out",
+    animation: "stonedogStrikeIn 200ms ease-out",
     "@media (prefers-reduced-motion: reduce)": {
       animation: "none",
     },

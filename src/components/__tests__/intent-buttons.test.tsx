@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { HopperStyleProvider } from "../../config/style-config";
+import { StonedogStyleProvider } from "../../config/style-config";
 import { ICON_INTENTS, missingIntentIcons } from "../../config/intent-icons";
 import {
   StyledDeleteButton,
@@ -12,9 +12,9 @@ const trash = <svg data-testid="trash" />;
 const disk = <svg data-testid="disk" />;
 
 const withIcons = (ui: React.ReactNode, density?: "compact" | "normal" | "comfortable") => (
-  <HopperStyleProvider density={density} icons={{ delete: trash, save: disk }}>
+  <StonedogStyleProvider density={density} icons={{ delete: trash, save: disk }}>
     {ui}
-  </HopperStyleProvider>
+  </StonedogStyleProvider>
 );
 
 describe("intent buttons", () => {
