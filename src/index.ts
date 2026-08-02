@@ -173,3 +173,17 @@ export { INPUT_TEXT_VARIANTS } from "./components/StyledInputText";
 export { default as StyledInputTextArea } from "./components/StyledInputTextArea";
 export type { StyledInputTextAreaProps } from "./components/StyledInputTextArea";
 export { default as DictationPrompt } from "./components/DictationPrompt";
+
+// ---------------------------------------------------------------------------
+// Select + search
+// ---------------------------------------------------------------------------
+export { default as StyledInputSelect } from "./components/StyledInputSelect";
+export type {
+  StyledInputSelectProps,
+  SelectOption,
+  SelectVariant,
+} from "./components/StyledInputSelect";
+export { SELECT_VARIANTS } from "./components/StyledInputSelect";
+
+export { default as StyledSearch } from "./components/StyledSearch";
+export type { StyledSearchProps } from "./components/StyledSearch";
