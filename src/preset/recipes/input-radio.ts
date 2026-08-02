@@ -22,8 +22,24 @@ export const inputRadioRootRecipe = defineSlotRecipe({
         bg: "rgba(0, 123, 255, 0.2)",
       },
     },
+    // Visually hidden, NOT `display: none` — which is what this was.
+    //
+    // `display: none` takes the input out of the accessibility tree and out of
+    // the tab order, so the group could not be reached or operated by keyboard
+    // at all, and a screen reader never saw the radios. Clicking the label with
+    // a pointer was the only way to choose anything: a WCAG 2.1.1 (Keyboard)
+    // failure at Level A, on a control whose whole job is making a choice.
+    //
+    // Transparent and laid over the control instead, so it keeps its semantics,
+    // its focus, and its hit area. The focus ring is drawn on `control` below,
+    // since an invisible element cannot show one.
     input: {
-      display: "none",
+      position: "absolute",
+      width: "1.25rem",
+      height: "1.25rem",
+      margin: "0",
+      opacity: 0,
+      cursor: "pointer",
     },
     control: {
       width: "1.25rem",
@@ -31,6 +47,13 @@ export const inputRadioRootRecipe = defineSlotRecipe({
       borderRadius: "50%",
       border: "2px solid",
       borderColor: "gray.400",
+      // The focus ring for the transparent input above. Keyboard reachability
+      // is worth nothing if the user cannot see where they are.
+      ".input-radio__input:focus-visible + &": {
+        outline: "2px solid",
+        outlineColor: "borderBgAccent",
+        outlineOffset: "2px",
+      },
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
