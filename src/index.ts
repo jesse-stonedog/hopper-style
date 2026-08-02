@@ -160,3 +160,15 @@ export { INPUT_BOOL_VARIANTS } from "./components/StyledInputBool";
 
 export { default as StyledInputSlider } from "./components/StyledInputSlider";
 export type { StyledInputSliderProps } from "./components/StyledInputSlider";
+
+// ---------------------------------------------------------------------------
+// Text inputs — dictation is supplied by the host, never implemented here
+// ---------------------------------------------------------------------------
+export type { Dictation } from "./components/dictation";
+
+export { default as StyledInputText } from "./components/StyledInputText";
+export type { StyledInputTextProps, InputTextVariant } from "./components/StyledInputText";
+export { INPUT_TEXT_VARIANTS } from "./components/StyledInputText";
+
+export { default as StyledInputTextArea } from "./components/StyledInputTextArea";
+export type { StyledInputTextAreaProps } from "./components/StyledInputTextArea";
