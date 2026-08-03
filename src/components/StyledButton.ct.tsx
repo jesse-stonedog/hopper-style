@@ -155,27 +155,26 @@ test.describe("link does not render on the user agent's ButtonFace (NEH-307)", (
 
     const declaredBy = await page.evaluate(() => {
       const el = document.querySelector("button")!;
-      for (const sheet of Array.from(document.styleSheets)) {
-        let rules: CSSRule[];
+      const walk = (list: CSSRule[]): string[] =>
+        list.flatMap((rule) => {
+          if (rule instanceof CSSGroupingRule) return walk(Array.from(rule.cssRules));
+          if (!(rule instanceof CSSStyleRule)) return [];
+          if (!el.matches(rule.selectorText)) return [];
+          const value =
+            rule.style.getPropertyValue("background-color") ||
+            rule.style.getPropertyValue("background");
+          return value ? [`${rule.selectorText} { ${value} }`] : [];
+        });
+
+      return Array.from(document.styleSheets).flatMap((sheet) => {
         try {
-          rules = Array.from(sheet.cssRules);
+          // A cross-origin sheet throws on `cssRules`; nothing we author is
+          // one, so skipping is right rather than failing the test.
+          return walk(Array.from(sheet.cssRules));
         } catch {
-          continue;
+          return [];
         }
-        const walk = (list: CSSRule[]): string[] =>
-          list.flatMap((rule) => {
-            if (rule instanceof CSSGroupingRule) return walk(Array.from(rule.cssRules));
-            if (!(rule instanceof CSSStyleRule)) return [];
-            if (!el.matches(rule.selectorText)) return [];
-            const value =
-              rule.style.getPropertyValue("background-color") ||
-              rule.style.getPropertyValue("background");
-            return value ? [`${rule.selectorText} { ${value} }`] : [];
-          });
-        const hits = walk(Array.from(sheet.cssRules));
-        if (hits.length) return hits;
-      }
-      return [];
+      });
     });
 
     expect(declaredBy.join("\n")).toMatch(/button--variant_link/);

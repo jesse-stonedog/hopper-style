@@ -41,8 +41,14 @@ const VARIANTS = [
 
 const variants = (buttonRecipe.variants?.variant ?? {}) as Record<
   string,
-  StyleObject
+  StyleObject | undefined
 >;
+
+function variantOf(name: string): StyleObject {
+  const v = variants[name];
+  expect(v).toBeDefined();
+  return v as StyleObject;
+}
 
 describe("the button recipe declares a background on every variant (NEH-307)", () => {
   it("offers exactly the variants under test", () => {
@@ -53,7 +59,7 @@ describe("the button recipe declares a background on every variant (NEH-307)", (
   });
 
   it.each(VARIANTS)("%s states its own background", (name) => {
-    const v = variants[name];
+    const v = variantOf(name);
     const paints =
       "bg" in v || "background" in v || "backgroundColor" in v ||
       "backgroundImage" in v || "bgGradient" in v;
@@ -66,8 +72,8 @@ describe("the button recipe declares a background on every variant (NEH-307)", (
     // behind it should show through — but it has to be SAID. Saying nothing
     // yields the browser's grey, not transparency. `unstyled` already gets
     // this right and is the shape being copied.
-    expect(variants.link.backgroundColor).toBe("transparent");
-    expect(variants.unstyled.backgroundColor).toBe("transparent");
+    expect(variantOf("link").backgroundColor).toBe("transparent");
+    expect(variantOf("unstyled").backgroundColor).toBe("transparent");
   });
 });
 
@@ -86,7 +92,7 @@ describe("the generated stylesheet carries those declarations (NEH-307)", () => 
       new RegExp(`\\.button--variant_${variant}\\s*\\{([^}]*)\\}`),
     );
     expect(match).not.toBeNull();
-    return match![1];
+    return match?.[1] ?? "";
   }
 
   it.each(VARIANTS)("emits a background declaration for %s", (name) => {
