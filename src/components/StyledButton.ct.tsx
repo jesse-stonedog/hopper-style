@@ -103,6 +103,85 @@ test.describe("variants paint", () => {
   }
 });
 
+test.describe("link does not render on the user agent's ButtonFace (NEH-307)", () => {
+  /**
+   * `link` was the one variant of ten that declared no background, and a
+   * `<button>` with no background is not transparent — the UA paints its own
+   * `ButtonFace`. This package sets `preflight: false`, and the harness reset
+   * (like the largest consumer's empty `@layer reset`) does not zero it, so
+   * what these tests measure is what a consumer actually gets.
+   *
+   * Measured here on the pre-fix recipe: `rgb(239, 239, 239)` at a light UA
+   * colour scheme and `rgb(107, 107, 107)` at a dark one. A theme-controlled
+   * background is by definition neither.
+   */
+
+  test("computes a transparent background rather than a system colour", async ({ mount }) => {
+    const component = await mount(<StyledButton variant="link">Go</StyledButton>);
+    const bg = await component.evaluate((el) => getComputedStyle(el).backgroundColor);
+
+    // Transparent, so the themed surface behind the button shows through —
+    // the same result `unstyled` already gets by stating it.
+    expect(bg).toBe("rgba(0, 0, 0, 0)");
+  });
+
+  test("keeps that background when the UA colour scheme flips", async ({ mount, page }) => {
+    // The issue's third repro step, and the part that makes this an
+    // accessibility problem rather than a cosmetic one: `ButtonFace` is a
+    // system colour, so its contrast against `textMain` is set by the browser
+    // and moves underneath us. A theme-controlled background does not.
+    //
+    // `color-scheme: light dark` is what lets Chromium's system colours
+    // respond at all; without it the flip is a no-op and this would pass
+    // vacuously on the broken code.
+    await page.addStyleTag({ content: ":root { color-scheme: light dark; }" });
+    const component = await mount(<StyledButton variant="link">Go</StyledButton>);
+    const read = () => component.evaluate((el) => getComputedStyle(el).backgroundColor);
+
+    await page.emulateMedia({ colorScheme: "light" });
+    const light = await read();
+    await page.emulateMedia({ colorScheme: "dark" });
+    const dark = await read();
+
+    expect(dark).toBe(light);
+    expect(light).toBe("rgba(0, 0, 0, 0)");
+  });
+
+  test("its background is stated by the recipe, not left to the browser", async ({ mount, page }) => {
+    // A rule that exists is not a rule that applies — see NEH-288, where a
+    // class name matched nothing. Ask the browser which stylesheet rule won,
+    // rather than trusting that the class is on the element.
+    await mount(<StyledButton variant="link">Go</StyledButton>);
+
+    const declaredBy = await page.evaluate(() => {
+      const el = document.querySelector("button")!;
+      for (const sheet of Array.from(document.styleSheets)) {
+        let rules: CSSRule[];
+        try {
+          rules = Array.from(sheet.cssRules);
+        } catch {
+          continue;
+        }
+        const walk = (list: CSSRule[]): string[] =>
+          list.flatMap((rule) => {
+            if (rule instanceof CSSGroupingRule) return walk(Array.from(rule.cssRules));
+            if (!(rule instanceof CSSStyleRule)) return [];
+            if (!el.matches(rule.selectorText)) return [];
+            const value =
+              rule.style.getPropertyValue("background-color") ||
+              rule.style.getPropertyValue("background");
+            return value ? [`${rule.selectorText} { ${value} }`] : [];
+          });
+        const hits = walk(Array.from(sheet.cssRules));
+        if (hits.length) return hits;
+      }
+      return [];
+    });
+
+    expect(declaredBy.join("\n")).toMatch(/button--variant_link/);
+  });
+});
+
 test.describe("states", () => {
   test("hover changes the background", async ({ mount, page }) => {
     // The regression that shipped: `outline`'s hover named a token that did not
