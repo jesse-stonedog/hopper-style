@@ -93,7 +93,12 @@ export const StyledHStack: React.FC<StyledHStackProps> = ({
   // Map React-style props to styled-system pattern props
   const mappedProps: Record<string, unknown> = {
     gap: typeof gap === "number" ? String(gap) : gap,
-    align: align || alignItems,
+    // `alignItems`, not `align`. The generated `hstack` pattern destructures
+    // only `justify` and `gap`, hard-codes `alignItems: "center"`, then spreads
+    // the rest — so only a key literally named `alignItems` overrides that
+    // centre. `align` is not a Panda utility either, so it used to survive into
+    // `css()` and emit a class name with no rule behind it (NEH-288).
+    alignItems: align || alignItems,
     justify: justify || justifyContent,
     width: width || w,
     marginBottom: marginBottom || mb,

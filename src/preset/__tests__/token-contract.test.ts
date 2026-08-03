@@ -121,6 +121,24 @@ describe("the preset", () => {
     expect(Object.values(staticRecipes).every((v) => Array.isArray(v) && v[0] === "*")).toBe(true);
   });
 
+  it("force-generates the flexbox alignment utilities", () => {
+    // NEH-288. StyledHStack/StyledVStack rename `align`/`justify` to
+    // `alignItems`/`justifyContent` at runtime, so the extractor — which only
+    // reads source text — never sees the value it has to generate a rule for.
+    // Without this the component emits `ai_baseline` and nothing defines it.
+    const preset = stonedogStylePreset();
+    const cssEntries = preset.staticCss?.css ?? [];
+    const properties = cssEntries.flatMap((entry) =>
+      Object.entries((entry as { properties?: Record<string, string[]> }).properties ?? {}),
+    );
+    const byName = Object.fromEntries(properties);
+
+    expect(byName.alignItems).toEqual(expect.arrayContaining(["baseline", "stretch", "flex-start", "flex-end"]));
+    expect(byName.justifyContent).toEqual(
+      expect.arrayContaining(["space-between", "flex-start", "flex-end", "center"]),
+    );
+  });
+
   it("does not impose application-level decisions on its consumers", () => {
     // A preset that restyles `body` or forces a preflight is hard to adopt;
     // those belong to the app. Regression guard on the adoption story.
