@@ -81,7 +81,11 @@ export const listRecipe = defineSlotRecipe({
         },
         item: {
           borderBottom: "1px solid",
-          borderColor: "whiteAlpha.300",
+          // `whiteAlpha.300` was Chakra vocabulary this package never defined,
+          // so these row separators never painted (NEH-301). Half-strength so
+          // the divider still reads as subordinate to the outer border, which
+          // is what the alpha was buying.
+          borderColor: "borderBgPrimary/30",
           _last: {
             borderBottom: "none",
           },

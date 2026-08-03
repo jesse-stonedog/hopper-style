@@ -79,7 +79,10 @@ export const inputSurfaceVariants = {
     borderRadius: "0",
   },
   aurora: {
-    backgroundImage: "linear-gradient(to right, boxBgAccent, boxBgSecondary)",
+    // Bare token names do not substitute inside an arbitrary value, so this
+    // gradient was invalid and never painted (NEH-301).
+    backgroundImage:
+      "linear-gradient(to right, {colors.boxBgAccent}, {colors.boxBgSecondary})",
     color: "textPrimary",
     borderColor: "borderBgAccent",
   },

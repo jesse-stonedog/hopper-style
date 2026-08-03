@@ -95,8 +95,11 @@ export const inputRadioRootRecipe = defineSlotRecipe({
       },
       aurora: {
         item: {
+          // Bare token names do not substitute inside an arbitrary value, so
+          // this gradient was invalid and never painted (NEH-301). `{colors.X}`
+          // is the syntax that does.
           backgroundImage:
-            "linear-gradient(to right, boxBgAccent, boxBgSecondary)",
+            "linear-gradient(to right, {colors.boxBgAccent}, {colors.boxBgSecondary})",
           color: "textPrimary",
           borderColor: "transparent",
         },

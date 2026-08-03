@@ -44,7 +44,9 @@ export const formRecipe = defineRecipe({
         },
       },
       aurora: {
-        backgroundImage: `linear-gradient(to right, "textPrimary", "secondary")`,
+        // Quoted token names are CSS strings, so this gradient was invalid and
+        // never painted (NEH-301). `{colors.X}` is the substituting syntax.
+        backgroundImage: `linear-gradient(to right, {colors.boxBgAccent}, {colors.boxBgSecondary})`,
         color: "textPrimary",
         borderColor: "transparent",
         "& > li:not(:last-child)": {
@@ -62,8 +64,9 @@ export const formRecipe = defineRecipe({
         },
       },
       matte: {
-        bg: "secondary",
-        color: "textPrimary",
+        // `secondary` was undefined vocabulary — never painted (NEH-301).
+        bg: "boxBgSecondary",
+        color: "textSecondary",
         borderColor: "borderBgPrimary",
         "& > li:not(:last-child)": {
           borderBottom: "1px solid",

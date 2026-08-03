@@ -100,25 +100,13 @@ describe("recipes honour the configurable prefix", () => {
    * StyledSidebar's item descriptions) as recently as NEH-223. Grepping the
    * generated stylesheet is the only thing that sees them at all.
    *
-   * KNOWN, PRE-EXISTING, and deliberately not fixed here (NEH-301): the entries
-   * below are dead declarations in other recipes, found by this test when it
-   * was written. Fixing them changes rendering, so each wants
-   * its own PR and a real look at the result. The allowlist exists so no NEW
-   * one can land; shrinking it is the point, growing it needs an argument.
+   * The allowlist this carried is GONE as of NEH-301 — all nine pre-existing
+   * offenders are fixed, so the assertion is now simply "none, ever". Do not
+   * reintroduce it: an allowlist is how this defect class became normal enough
+   * to survive an extraction, and the whole value of the guard is that there is
+   * no way to make it pass except by making the declaration render.
    */
   it("never emits a colour value that is neither a token reference nor real CSS", () => {
-    const KNOWN_DEAD = new Set([
-      "background: bgAccent",
-      "background: primary",
-      "background: primary.600",
-      "background: secondary",
-      "background-color: blackAlpha.500",
-      "background-color: whiteAlpha.500",
-      "border-color: primary",
-      "border-color: whiteAlpha.300",
-      "color: whiteAlpha.900",
-    ]);
-
     const COLOUR_PROPERTY =
       /^\s*(color|background|background-color|border-color|border-[a-z]+-color|fill|stroke|outline-color|scrollbar-color|caret-color|text-decoration-color|accent-color|column-rule-color)\s*:\s*([^;]+);/;
     // Everything a browser can actually paint from. A token reference is the
@@ -137,7 +125,40 @@ describe("recipes honour the configurable prefix", () => {
       offenders.add(`${property}: ${value}`);
     }
 
-    expect([...offenders].filter((o) => !KNOWN_DEAD.has(o)).sort()).toEqual([]);
+    expect([...offenders].sort()).toEqual([]);
+  });
+
+  /**
+   * The same defect, one nesting level down — inside a gradient (NEH-301).
+   *
+   * The declaration-level guard above cannot see these: a value containing
+   * `gradient` is real CSS as far as a regex is concerned, so
+   * `linear-gradient(to right, "textPrimary", "secondary")` sails straight
+   * past it. Three recipes shipped exactly that — a *quoted* token name, which
+   * is a CSS string and never a colour, so the whole gradient was invalid and
+   * every one of those `aurora` variants fell back to no background at all.
+   * Two more named tokens unquoted (`linear-gradient(to right, boxBgAccent,
+   * boxBgSecondary)`), which is equally dead: Panda only substitutes a token
+   * inside an arbitrary value when it is written as `{colors.boxBgAccent}`.
+   *
+   * So the colour STOPS at a bare `var(...)` or a literal. Anything else
+   * between the commas is a token name that did not resolve.
+   */
+  it("never leaves an unresolved token inside a gradient", () => {
+    const offenders = new Set<string>();
+    for (const line of recipeSource.split("\n")) {
+      if (!/gradient\(/.test(line)) continue;
+      // The colour stops of a gradient, minus the direction/position syntax.
+      const args = line.slice(line.indexOf("gradient(") + "gradient(".length);
+      for (const raw of args.split(",")) {
+        const arg = raw.trim().replace(/\)+;?$/, "").trim();
+        if (!arg) continue;
+        // Direction/interpolation/position syntax, and real colour values.
+        if (/^(to |from |at |in |\d|-?\d*\.?\d+(%|px|deg|rad|turn|rem)?$|circle|ellipsis|ellipse|closest|farthest|var\(|#|rgb|hsl|oklch|lab\(|transparent$|currentColor$|black$|white$)/i.test(arg)) continue;
+        offenders.add(arg);
+      }
+    }
+    expect([...offenders].sort()).toEqual([]);
   });
 });
 

@@ -29,9 +29,11 @@ export const inputBoolRecipe = defineSlotRecipe({
       _hover: {
         cursor: "pointer",
       },
+      // `primary` was undefined vocabulary, so a ticked checkbox got no fill
+      // of its own and fell back to the UA's (NEH-301).
       _checked: {
-        bg: "primary",
-        borderColor: "primary",
+        bg: "buttonBgPrimary",
+        borderColor: "borderBgPrimary",
       },
     },
     label: {},
@@ -82,7 +84,10 @@ export const inputBoolRecipe = defineSlotRecipe({
       matte: {
         control: {
           bgGradient: "linear(to-b, gray.800, gray.900)",
-          color: "whiteAlpha.900",
+          // `whiteAlpha.900` never painted (NEH-301). `white` rather than a
+          // token for the same reason as boxRecipe's matte: the surface above
+          // is a FIXED dark gradient, so themed text on it risks dark-on-dark.
+          color: "white",
           fontWeight: "bold",
         },
       },
@@ -102,11 +107,15 @@ export const inputBoolRecipe = defineSlotRecipe({
         control: {
           bg: "gray.200",
           color: "gray.800",
+          // `primary` / `primary.600` were undefined vocabulary, so the
+          // checked and checked-hover fills never painted (NEH-301). The
+          // hover step is the matching `*Hover` token rather than an invented
+          // darker shade — this package holds no colour scales to step along.
           _checked: {
-            bg: "primary",
-            color: "white",
+            bg: "buttonBgPrimary",
+            color: "buttonTextPrimary",
             _hover: {
-              bg: "primary.600",
+              bg: "buttonBgPrimaryHover",
             },
           },
           _hover: {
