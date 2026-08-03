@@ -130,6 +130,23 @@ export const buttonRecipe = defineRecipe({
       },
       link: {
         color: "textMain",
+        /**
+         * Stated, not omitted (NEH-307).
+         *
+         * A `<button>` that declares no background does not render
+         * transparent — the user agent paints its own `ButtonFace`, a system
+         * grey that ignores the theme and moves with the browser's colour
+         * scheme (measured: `rgb(239,239,239)` light, `rgb(107,107,107)`
+         * dark). This preset sets `preflight: false` and imposes no reset on
+         * its consumers, so there is nothing between this recipe and the UA's
+         * paint except this line. `unstyled` has always said it; `link` was
+         * the only one of the ten variants that did not.
+         *
+         * Transparent is the right answer for a link-styled button — the
+         * themed surface behind it should show through — but silence gets the
+         * browser's grey, not transparency.
+         */
+        backgroundColor: "transparent",
         border: "1px solid transparent",
         textDecoration: "underline",
         _hover: {
