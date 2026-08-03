@@ -185,3 +185,98 @@ describe("StyledSidebar — empty and collapsing", () => {
     expect(screen.queryByTestId("sidebar-collapse")).not.toBeInTheDocument();
   });
 });
+
+describe("StyledSidebar — keyboard reach", () => {
+  /**
+   * The *pixel* half of §G24 — a visible focus ring, a working Enter — is in
+   * StyledSidebar.ct.tsx, because jsdom neither lays out nor translates a
+   * keypress on a native button into a click. What jsdom CAN answer is the
+   * structural half, and it is the half that silently regresses: a control
+   * built from a div, or one taken out of the tab order.
+   */
+  it("builds every control from a real button, none of them removed from the tab order", () => {
+    renderSidebar({ overflow: "paging", itemsPerPage: 2, onCollapsedChange: jest.fn() });
+
+    const controls = [
+      screen.getByTestId("sidebar-item-calendar"),
+      screen.getByRole("button", { name: "What does Calendar do?" }),
+      screen.getByTestId("sidebar-prev"),
+      screen.getByTestId("sidebar-next"),
+      screen.getByTestId("sidebar-collapse"),
+    ];
+
+    for (const control of controls) {
+      expect(control.tagName).toBe("BUTTON");
+      // `type="button"` matters wherever a host drops this inside a form: the
+      // default is `submit`, and choosing a tool would post the page.
+      expect(control).toHaveAttribute("type", "button");
+      expect(control).not.toHaveAttribute("tabindex", "-1");
+    }
+  });
+
+  it("gives the help control one accessible name, not two", () => {
+    // StyledTooltip used to name its wrapper as well as its trigger, so the
+    // same control was announced twice with different words (NEH-151). In click
+    // mode the wrapper must stay anonymous.
+    renderSidebar();
+    const help = screen.getByRole("button", { name: "What does Calendar do?" });
+    expect(screen.getAllByRole("button", { name: "What does Calendar do?" })).toHaveLength(1);
+    expect(help.parentElement).not.toHaveAttribute("aria-label");
+    expect(help.parentElement).not.toHaveAttribute("role");
+  });
+});
+
+describe("StyledSidebar — scroll mode", () => {
+  it("puts the list in the library's scroll container, and only in scroll mode", () => {
+    // §D14. The old suite could only see that no pager rendered, which is
+    // equally true of a rail that silently cuts the remaining tools off.
+    const { rerender } = renderSidebar();
+    expect(screen.getByTestId("sidebar-scroll")).toContainElement(
+      screen.getByTestId("sidebar-items"),
+    );
+
+    rerender(<StyledSidebar items={TOOLS} onSelect={jest.fn()} overflow="paging" />);
+    expect(screen.queryByTestId("sidebar-scroll")).not.toBeInTheDocument();
+  });
+});
+
+describe("StyledSidebar — token compliance", () => {
+  /**
+   * The package's oldest defect class, and this component carried two of them:
+   * an inline `style={{ background: "var(--colors-box-bg-accent)" }}` for the
+   * selected row, and `color="fg.muted"` on the description — a token from a
+   * namespace nothing here defines, which Panda passed through as the literal
+   * `color: fg.muted` and the browser discarded. Neither produced a build
+   * error, a console warning, or a failing test; the muted description simply
+   * never rendered muted.
+   *
+   * Both now go through the token layer, which is the only thing that
+   * re-points under a consumer's `cssVarPrefix` — and, just as usefully, the
+   * only thing a stylesheet grep can see.
+   */
+  it("paints the selected row from tokens rather than an inline custom property", () => {
+    renderSidebar({ selectedId: "tasks" });
+    const selected = screen.getByTestId("sidebar-item-tasks");
+
+    expect(selected.getAttribute("style") ?? "").not.toContain("var(--");
+    expect(selected.className).toContain("bd-c_borderBgAccent");
+    expect(selected.className).toContain("bg_boxBgAccent");
+  });
+
+  it("distinguishes the selected row by weight as well as colour", () => {
+    // WCAG 1.4.1 — the border and background are a colour signal, so the
+    // label's weight has to carry it too, or greyscale loses the selection.
+    renderSidebar({ selectedId: "tasks" });
+    const selectedLabel = screen.getByText("Tasks");
+    const plainLabel = screen.getByText("Notes");
+    expect(selectedLabel.className).not.toBe(plainLabel.className);
+    expect(selectedLabel.className).toContain("fw_bold");
+  });
+
+  it("names a description colour the token contract actually defines", () => {
+    renderSidebar();
+    const description = screen.getByText("Events & appointments");
+    expect(description.className).toContain("c_textSecondary");
+    expect(description.className).not.toContain("fg.muted");
+  });
+});

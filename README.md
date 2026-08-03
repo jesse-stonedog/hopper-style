@@ -468,6 +468,87 @@ replacement and impose it on everyone, the artwork was cut out entirely. Your
 licensed set can live in a private package while the components that lay it out
 stay open — which is exactly the arrangement the original app now uses.
 
+## Navigation — `StyledSidebar`
+
+A rail of tools, built for readers who navigate by reading words rather than by
+decoding glyphs. Every item is **an icon *and* the tool's name** — there is no
+icon-only rendering, not even collapsed. Full reasoning in
+[PRD-0001](docs/prd/PRD-0001-styled-sidebar.md).
+
+```tsx
+import { StyledSidebar, type SidebarItem } from "stonedog-style";
+
+const tools: SidebarItem[] = [
+  { id: "calendar", icon: <StyledCalendar />, label: "Calendar",
+    description: "Events & appointments", help: "Shows what is coming up." },
+  { id: "notes", icon: <StyledNotes />, label: "Notes" },
+];
+
+<StyledSidebar
+  items={tools}                       // already ordered, already filtered
+  selectedId={selected}
+  onSelect={setSelected}
+  overflow="scroll"                   // or "paging"
+  emptyState="No tools match that search."
+  heading="TOOLS"
+  aria-label="Care Tools"
+/>;
+```
+
+| Prop | Meaning |
+|---|---|
+| `items` | `SidebarItem[]` — `{ id, icon?, label, description?, help? }`. **Rendered exactly as given.** |
+| `selectedId` / `onSelect` | Controlled selection. `onSelect(id)` reports a choice; navigation is yours. |
+| `overflow` | `"scroll"` (default, uses `StyledScrollbar`) or `"paging"` (previous/next + "Page 2 of 4"). |
+| `itemsPerPage` | Paging only; default 8. |
+| `collapsed` / `onCollapsedChange` | Controlled collapse. Omit the handler and no collapse control renders. |
+| `emptyState` | Rendered inside a live region when `items` is empty. |
+| `heading` | e.g. `"TOOLS"`. |
+| `aria-label` | Names the `navigation` landmark. Defaults to `"Tools"`. |
+
+### Ordering, filtering and the search box are **yours**, not the component's
+
+This is the load-bearing part of the API, so it is stated plainly: **`items`
+arrive already ordered and already filtered. `StyledSidebar` does not sort, does
+not filter, and owns no search field.**
+
+- **Ordering** is a user preference the host stores and applies.
+- **Filtering is policy** — name only or description too, fuzzy or exact,
+  accent-insensitive or not. Different products want different answers, and
+  baking one in would impose it on every future consumer.
+- **A search input built here could not dictate.** Speech-to-text lives in the
+  host's own text input, behind its own engine selection and feature flag. This
+  package cannot import that and must not depend on any host. Leaving the field
+  outside is precisely what makes dictated search work.
+
+Three behaviours exist to make that seam seamless, and a host gets them free:
+
+- **Selection survives filtering.** A `selectedId` no longer present in `items`
+  stays selected — the reader is searching, not navigating away.
+- **Paging resets when `items` changes**, so a narrowed list never strands
+  anyone on an empty page 3.
+- **An empty `items` renders `emptyState` in a live region**, so a screen-reader
+  user learns the filter matched nothing instead of meeting a blank panel.
+
+### What it guarantees
+
+- **Tap targets:** 60px minimum on a tool row, 48px on the pager, collapse and
+  help controls — stated as `min-height`, so no density or font-scale change
+  erodes them.
+- **Help opens on click, never hover** (via `StyledTooltip`'s `trigger="click"`,
+  which renders its own visible, focusable help control). Escape closes it and
+  returns focus. **Nothing anywhere in this component changes state on hover.**
+- **Selection is never colour alone** — border, background *and* label weight,
+  plus `aria-current` for assistive technology.
+- **Long names wrap** rather than spilling out of the rail.
+- **No drag interaction at all** (WCAG 2.2 SC 2.5.7). A host that builds
+  reordering must provide a non-drag path.
+
+Scroll mode needs a height to scroll inside: `StyledScrollbar` is
+`flex: 1; min-height: 0; overflow: auto`, so give the sidebar's container a
+height (`display: flex; flex-direction: column; height: …`). Unconstrained, the
+rail simply grows — which is correct, and is not a bug.
+
 ## Adopting a component as it is migrated
 
 Components move out of HopperGuard into this package one at a time (NEH-167).
@@ -583,7 +664,7 @@ settled question.
 
 | PRD | Component | Status |
 |---|---|---|
-| [PRD-0001](docs/prd/PRD-0001-styled-sidebar.md) | `StyledSidebar` | Draft |
+| [PRD-0001](docs/prd/PRD-0001-styled-sidebar.md) | `StyledSidebar` | Shipped |
 
 ## License
 
