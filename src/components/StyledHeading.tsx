@@ -54,6 +54,12 @@ const StyledHeading = React.forwardRef<HTMLElement, StyledHeadingProps>(
           as={as}
           ref={ref}
           size={headingSize}
+          // The theme's heading face, so a theme can pair a display face with
+          // its body face (NEH-289). Asked for here rather than in textRecipe
+          // because StyledHeading shares that recipe with body copy. Written as
+          // a literal so Panda's extractor, which only reads source text, sees
+          // it.
+          fontFamily="heading"
           fontWeight="bold"
           fixedSize={fixedSize}
           color={color}

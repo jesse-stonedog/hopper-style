@@ -388,14 +388,70 @@ remembering because it hid inside a *component* rather than a recipe:
 
 **The guard is now general, not per-instance.** `token-contract.test.ts` scans
 every colour declaration in the generated stylesheet and fails on any value that
-is neither a `var(…)` reference nor real CSS. It carries a `KNOWN_DEAD`
-allowlist of nine pre-existing offenders (NEH-301) so no *new* one can land;
-shrinking that list is the point, growing it needs an argument.
+is neither a `var(…)` reference nor real CSS. It carried a `KNOWN_DEAD`
+allowlist of nine pre-existing offenders; **that allowlist is gone as of
+NEH-301** — all nine are fixed and the assertion is now simply "none, ever".
+Do not reintroduce it. An allowlist is how this defect class became normal
+enough to survive an extraction in the first place, and the entire value of the
+guard is that there is no way to make it pass except by making the declaration
+render.
+
+**A second guard walks gradient colour stops**, because the first one cannot
+see them: a value containing `gradient` reads as real CSS to a
+declaration-level regex. Five gradients were dead behind that gap — three with
+*quoted* token names (a CSS string is never a colour, so the whole gradient was
+invalid and those `aurora` variants had no background at all) and two with bare
+token names. Inside an arbitrary value only `{colors.X}` substitutes; a bare
+`boxBgAccent` does not.
 
 Still outstanding, inherited and **not** fixed: literal `gray.*`, `rgba(...)`,
 and `color: "black"` / `backgroundColor: "white"` in `recipes/input-text.ts`.
 These misread under dark and high-contrast themes. Fixing them changes rendering
-in a visible way, so it wants its own PR and a real look at the result.
+in a visible way, so it wants its own PR and a real look at the result. Note
+`box.ts` and `input-bool.ts` now carry a deliberate `color: "white"` on `matte`:
+that variant's surface is a *fixed* `gray.800`→`gray.900` gradient, so themed
+text on it renders dark-on-dark in a light theme. The literal is correct until
+the surface and the text move together, which is what that cleanup has to do.
+
+### A recipe can only style what the element lets it (NEH-234)
+
+`inputBoolRecipe`'s slot is a native `<input type="checkbox">` at
+`appearance: auto`, and Chromium **computes `background-color` and `border-*`
+on it while painting neither** — the UA draws the widget. Two separate attempts
+at that issue produced correct-looking CSS that changed nothing on screen.
+
+The trap is that `getComputedStyle` reports the discarded values happily, so a
+test asserting on them passes while the user sees no difference. One did
+exactly that for months. **For anything drawn by the UA, assert only on
+properties verified to paint** — for a checkbox that is `accent-color`,
+`box-shadow` and `outline` — and check a screenshot before believing a variant
+reaches anyone.
+
+## Type comes from the theme, shape stays here (NEH-289)
+
+`fontFamily` and `fontWeight` tokens read `--<prefix>-font-family-*` and
+`--<prefix>-font-weight-*`, which `stonedog-theme` emits. Before this they were
+emitted and inert: nothing in this package read them, so a themed typeface
+stopped at the theme package's edge.
+
+Two things about them are deliberate and easy to undo by accident:
+
+- **They carry a fallback and are NOT in `requiredCssCustomProperties()`.**
+  That is the opposite of the colours, on purpose. An undefined colour paints
+  an invisible element — a loud, early bug. An undefined font falls back to the
+  browser's face and the page stays readable, so requiring them would break
+  every existing host (none define them) for no safety gain. It would also move
+  the `required === colours` identity the contract test pins on both sides.
+- **The weight tokens reuse Panda's own names** (`normal`/`medium`/`semibold`/
+  `bold`), which is what lets the `fontWeight: "bold"` already written across
+  seven recipes read the theme without a call site moving. The union is closed;
+  a step outside it is a `stonedog-theme` change first.
+
+Native form controls do **not** inherit the page font, so `button`,
+`icon-button` and the shared `input-surface` state `fontFamily` explicitly.
+Without that a themed typeface reaches the page and stops at every control on
+it. This package still owns SHAPE — the size scale, line height and density are
+untouched; family and weight are BRAND and only pass through.
 
 ## Accessibility is a floor, not a feature
 

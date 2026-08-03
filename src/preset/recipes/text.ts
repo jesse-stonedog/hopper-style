@@ -5,6 +5,9 @@ export const textRecipe = defineRecipe({
   description: "The styles for the Text component",
   base: {
     color: "textPrimary",
+    // The theme's body face (NEH-289). StyledHeading renders through this
+    // recipe too and asks for the heading face at its call site instead.
+    fontFamily: "body",
   },
   variants: {
     variant: {

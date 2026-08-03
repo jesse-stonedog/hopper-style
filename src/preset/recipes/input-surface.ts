@@ -35,6 +35,10 @@ export const inputSurfaceBase = {
     "calc(var(--panda-density-padding, 8px) + 4px) calc(var(--panda-density-padding, 8px) + 8px)",
   margin: 0,
   minHeight: "48px",
+  // Stated, not inherited (NEH-289): a native form control uses the UA's own
+  // font unless told otherwise, so without this a themed typeface reaches the
+  // page and stops at the edge of every input on it.
+  fontFamily: "body",
   fontSize: "var(--font-sizes-xl, 1.25rem)",
   transition: "box-shadow 0.2s, border-color 0.2s",
   // A token, not `black`: the base has to be legible on whatever the variant
