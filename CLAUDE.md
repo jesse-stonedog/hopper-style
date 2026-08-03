@@ -9,6 +9,26 @@ permanently. Never commit a credential, a customer name, a screenshot of real
 data, or anything under a licence that is not compatible with Apache-2.0 — see
 "What may never land here".
 
+## Published on npm
+
+`npm install stonedog-style` — **0.1.0, published 2026-08-03** under the npm
+account `stonedogcode`. Until then the only way to consume it was a git
+submodule, and every consumer still does that today.
+
+**Prefer the published package for a consumer that only uses this library.**
+Keep a submodule only while co-developing it alongside an app in the same stream
+of work (HopperGuard is doing exactly that under NEH-167). Publishing is manual
+and 2FA-gated, so npm `latest` can lag `main` — that lag is the reason a
+submodule is still right *while changing the package*, and the reason it is
+wrong once you are merely consuming it.
+
+Releasing: bump the version, land it, then from a clean `main` checkout run
+`npm run gate` and `npm publish --access public` (needs a 2FA OTP, or a
+granular token with bypass-2FA). A published version can never be reused.
+
+`stonedog-theme` ships alongside at the same version — it is where colours come
+from, and this package deliberately knows none.
+
 ## What this is
 
 One themeable component library, shared by applications that are owned by
@@ -187,6 +207,12 @@ export default defineConfig({
 **2. Add this package's source to `include`** (above). Panda finds styles by
 statically parsing source files. A package it never parses contributes no CSS,
 and its components render with class names that have no rules behind them.
+
+The glob must point wherever the package **actually lives**, which differs by
+how it was installed — `./node_modules/stonedog-style/src/**/*.tsx` from npm,
+`./packages/stonedog-style/src/**/*.tsx` as a submodule. Moving a consumer from
+one to the other means moving this line, and forgetting is silent: no build
+error, no console warning, just unstyled components.
 
 **3. Transpile the package.** It ships TypeScript source, not a bundle. In
 Next.js: `transpilePackages: ["stonedog-style"]`.
