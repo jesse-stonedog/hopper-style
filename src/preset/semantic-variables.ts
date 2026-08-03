@@ -112,6 +112,97 @@ const SIZE_TOKENS: Record<string, [suffix: string, fallback: string]> = {
   widgetBaseHeight: ["widget-base-height", "240px"],
 };
 
+/**
+ * The host's typeface, as `token name → [suffix, fallback]` (NEH-289).
+ *
+ * `stonedog-theme` resolves a theme's fonts into `--<prefix>-font-family-*` and
+ * `--<prefix>-font-weight-*`. Until these tokens existed nothing in this package
+ * read them, so a themed typeface was emitted and inert — it stopped at the
+ * theme package's edge.
+ *
+ * They follow the SIZE_TOKENS pattern (a fallback) rather than the COLOR_TOKENS
+ * one (no fallback), and the asymmetry is deliberate. An undefined colour paints
+ * an invisible element, which is a louder bug than a wrong shade and is exactly
+ * what you want to trip over in development. Type is the opposite: an undefined
+ * font falls back to the browser's own face and the page stays readable. So
+ * these are NOT in `requiredCssCustomProperties()` — putting them there would
+ * break every existing host (none of them define these) for no safety gain, and
+ * would move the `required === colours` identity that the contract test pins on
+ * both sides.
+ *
+ * Consequence worth stating plainly: a host that says nothing about type keeps
+ * its own, and this stays purely additive.
+ *
+ * This package still owns SHAPE. The size scale, line height and density are
+ * unchanged and stay here; family and weight are BRAND, and this is only the
+ * wire that lets the theme deliver them.
+ */
+const FONT_FAMILY_TOKENS: Record<string, [suffix: string, fallback: string]> = {
+  /** Body copy, and every form control that would otherwise use the UA font. */
+  body: ["font-family-body", "inherit"],
+  /** Headings, so a theme can pair a display face with its body face. */
+  heading: ["font-family-heading", "inherit"],
+  /**
+   * Monospace. `inherit` would be wrong here — the whole point of asking for
+   * mono is not wanting the inherited proportional face — so it falls back to
+   * the system mono stack instead.
+   */
+  mono: ["font-family-mono", "ui-monospace, SFMono-Regular, Menlo, monospace"],
+};
+
+/**
+ * Weight steps, matching what the recipes already name.
+ *
+ * The union is closed on purpose (`stonedog-theme` owns it): a recipe needing a
+ * step outside these four is a change there first. The names deliberately match
+ * Panda's built-in `fontWeights` tokens, so every existing `fontWeight: "bold"`
+ * in a recipe starts reading the theme without a single call site moving —
+ * `fontWeight` resolves through this token category already.
+ */
+const FONT_WEIGHT_TOKENS: Record<string, [suffix: string, fallback: string]> = {
+  normal: ["font-weight-normal", "400"],
+  medium: ["font-weight-medium", "500"],
+  semibold: ["font-weight-semibold", "600"],
+  bold: ["font-weight-bold", "700"],
+};
+
+/** Shared shape for the token maps that carry a fallback. */
+function createFallbackTokens(
+  map: Record<string, [suffix: string, fallback: string]>,
+  prefix: string,
+): Record<string, { value: string }> {
+  return Object.fromEntries(
+    Object.entries(map).map(([token, [suffix, fallback]]) => [
+      token,
+      { value: `var(--${prefix}-${suffix}, ${fallback})` },
+    ]),
+  );
+}
+
+/** Panda `fonts` token definitions, bound to a custom-property prefix. */
+export function createSemanticFonts(
+  prefix: string = DEFAULT_CSS_VAR_PREFIX,
+): Record<string, { value: string }> {
+  return createFallbackTokens(FONT_FAMILY_TOKENS, prefix);
+}
+
+/** Panda `fontWeights` token definitions, bound to a custom-property prefix. */
+export function createSemanticFontWeights(
+  prefix: string = DEFAULT_CSS_VAR_PREFIX,
+): Record<string, { value: string }> {
+  return createFallbackTokens(FONT_WEIGHT_TOKENS, prefix);
+}
+
+/** Every Panda font-family token this preset defines. */
+export function fontTokenNames(): string[] {
+  return Object.keys(FONT_FAMILY_TOKENS);
+}
+
+/** Every Panda font-weight token this preset defines. */
+export function fontWeightTokenNames(): string[] {
+  return Object.keys(FONT_WEIGHT_TOKENS);
+}
+
 /** Panda size-token definitions, bound to a custom-property prefix. */
 export function createSemanticSizes(
   prefix: string = DEFAULT_CSS_VAR_PREFIX,

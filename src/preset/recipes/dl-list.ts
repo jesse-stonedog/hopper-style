@@ -5,7 +5,11 @@ export const dlRecipe = defineRecipe({
   base: {
     border: "1px solid",
     borderRadius: "md",
-    borderColor: "purple",
+    // Was a literal `purple` (NEH-301): it rendered, but it was the same
+    // purple in every theme and in every colour mode. The row separators
+    // below already use this token — the outer border had simply never been
+    // moved onto it.
+    borderColor: "borderBgPrimary",
     // Add vertical padding and margin between dt/dd pairs
     "& > dt, & > dd": {
       paddingTop: "0.5rem",
@@ -25,8 +29,13 @@ export const dlRecipe = defineRecipe({
   variants: {
     variant: {
       solid: {
-        bg: "bgAccent",
-        color: "textPrimary",
+        // `bgAccent` was Chakra vocabulary this package never defined, so the
+        // surface never painted (NEH-301). `textAccent` rather than
+        // `textPrimary` because TEXT_BACKGROUND_PAIRS is what a host's
+        // contrast check reads: text on `boxBgAccent` must be `textAccent`, or
+        // the pair that gets validated is not the pair that renders.
+        bg: "boxBgAccent",
+        color: "textAccent",
         borderColor: "borderBgPrimary",
       },
       outline: {
@@ -38,7 +47,13 @@ export const dlRecipe = defineRecipe({
         },
       },
       aurora: {
-        backgroundImage: `linear-gradient(to right, "textPrimary", "secondary")`,
+        // The token names were QUOTED, so they were CSS strings, so the whole
+        // gradient was invalid and this variant had no background at all
+        // (NEH-301). `{colors.X}` is the syntax that actually substitutes a
+        // token inside an arbitrary value — see drawerRecipe, the one aurora
+        // that has been rendering. Surface tokens, not `textPrimary`: this is
+        // a background.
+        backgroundImage: `linear-gradient(to right, {colors.boxBgAccent}, {colors.boxBgSecondary})`,
         color: "textPrimary",
         borderColor: "transparent",
         "& > li:not(:last-child)": {
@@ -56,8 +71,10 @@ export const dlRecipe = defineRecipe({
         },
       },
       matte: {
-        bg: "secondary",
-        color: "textPrimary",
+        // `secondary` was undefined vocabulary — the surface never painted
+        // (NEH-301). Paired text, per TEXT_BACKGROUND_PAIRS.
+        bg: "boxBgSecondary",
+        color: "textSecondary",
         borderColor: "borderBgPrimary",
         "& > li:not(:last-child)": {
           borderBottom: "1px solid",

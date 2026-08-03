@@ -6,6 +6,8 @@ export const buttonRecipe = defineRecipe({
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
+    // A `<button>` does not inherit the page font — see input-surface (NEH-289).
+    fontFamily: "body",
     fontWeight: "semibold",
     padding: "calc(.2rem + var(--panda-density-padding, 8px))",
     /**

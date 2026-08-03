@@ -5,6 +5,10 @@ import {
   TEXT_BACKGROUND_PAIRS,
   colorTokenNames,
   createSemanticColors,
+  createSemanticFontWeights,
+  createSemanticFonts,
+  fontTokenNames,
+  fontWeightTokenNames,
   getBackgroundForText,
   requiredCssCustomProperties,
 } from "../semantic-variables";
@@ -100,25 +104,13 @@ describe("recipes honour the configurable prefix", () => {
    * StyledSidebar's item descriptions) as recently as NEH-223. Grepping the
    * generated stylesheet is the only thing that sees them at all.
    *
-   * KNOWN, PRE-EXISTING, and deliberately not fixed here (NEH-301): the entries
-   * below are dead declarations in other recipes, found by this test when it
-   * was written. Fixing them changes rendering, so each wants
-   * its own PR and a real look at the result. The allowlist exists so no NEW
-   * one can land; shrinking it is the point, growing it needs an argument.
+   * The allowlist this carried is GONE as of NEH-301 — all nine pre-existing
+   * offenders are fixed, so the assertion is now simply "none, ever". Do not
+   * reintroduce it: an allowlist is how this defect class became normal enough
+   * to survive an extraction, and the whole value of the guard is that there is
+   * no way to make it pass except by making the declaration render.
    */
   it("never emits a colour value that is neither a token reference nor real CSS", () => {
-    const KNOWN_DEAD = new Set([
-      "background: bgAccent",
-      "background: primary",
-      "background: primary.600",
-      "background: secondary",
-      "background-color: blackAlpha.500",
-      "background-color: whiteAlpha.500",
-      "border-color: primary",
-      "border-color: whiteAlpha.300",
-      "color: whiteAlpha.900",
-    ]);
-
     const COLOUR_PROPERTY =
       /^\s*(color|background|background-color|border-color|border-[a-z]+-color|fill|stroke|outline-color|scrollbar-color|caret-color|text-decoration-color|accent-color|column-rule-color)\s*:\s*([^;]+);/;
     // Everything a browser can actually paint from. A token reference is the
@@ -137,7 +129,120 @@ describe("recipes honour the configurable prefix", () => {
       offenders.add(`${property}: ${value}`);
     }
 
-    expect([...offenders].filter((o) => !KNOWN_DEAD.has(o)).sort()).toEqual([]);
+    expect([...offenders].sort()).toEqual([]);
+  });
+
+  /**
+   * The same defect, one nesting level down — inside a gradient (NEH-301).
+   *
+   * The declaration-level guard above cannot see these: a value containing
+   * `gradient` is real CSS as far as a regex is concerned, so
+   * `linear-gradient(to right, "textPrimary", "secondary")` sails straight
+   * past it. Three recipes shipped exactly that — a *quoted* token name, which
+   * is a CSS string and never a colour, so the whole gradient was invalid and
+   * every one of those `aurora` variants fell back to no background at all.
+   * Two more named tokens unquoted (`linear-gradient(to right, boxBgAccent,
+   * boxBgSecondary)`), which is equally dead: Panda only substitutes a token
+   * inside an arbitrary value when it is written as `{colors.boxBgAccent}`.
+   *
+   * So the colour STOPS at a bare `var(...)` or a literal. Anything else
+   * between the commas is a token name that did not resolve.
+   */
+  it("never leaves an unresolved token inside a gradient", () => {
+    const offenders = new Set<string>();
+    for (const line of recipeSource.split("\n")) {
+      if (!/gradient\(/.test(line)) continue;
+      // The colour stops of a gradient, minus the direction/position syntax.
+      const args = line.slice(line.indexOf("gradient(") + "gradient(".length);
+      for (const raw of args.split(",")) {
+        const arg = raw.trim().replace(/\)+;?$/, "").trim();
+        if (!arg) continue;
+        // Direction/interpolation/position syntax, and real colour values.
+        if (/^(to |from |at |in |\d|-?\d*\.?\d+(%|px|deg|rad|turn|rem)?$|circle|ellipsis|ellipse|closest|farthest|var\(|#|rgb|hsl|oklch|lab\(|transparent$|currentColor$|black$|white$)/i.test(arg)) continue;
+        offenders.add(arg);
+      }
+    }
+    expect([...offenders].sort()).toEqual([]);
+  });
+});
+
+/**
+ * The host's typeface (NEH-289).
+ *
+ * `stonedog-theme` had been resolving fonts into custom properties that nothing
+ * here read, so a themed typeface was emitted and inert. These pin both halves
+ * of the wiring AND the constraint that makes it safe to ship: fonts carry a
+ * fallback and are NOT required, which is the opposite of how colours work.
+ */
+describe("the font contract", () => {
+  const recipeSource = readFileSync(
+    join(__dirname, "..", "..", "..", "styled-system", "styles.css"),
+    "utf8",
+  );
+
+  it("resolves every font token to a host property with a fallback", () => {
+    for (const def of Object.values(createSemanticFonts())) {
+      expect(def.value).toMatch(
+        new RegExp(`^var\\(--${DEFAULT_CSS_VAR_PREFIX}-font-family-[a-z-]+, .+\\)$`),
+      );
+    }
+    for (const def of Object.values(createSemanticFontWeights())) {
+      expect(def.value).toMatch(
+        new RegExp(`^var\\(--${DEFAULT_CSS_VAR_PREFIX}-font-weight-[a-z-]+, \\d+\\)$`),
+      );
+    }
+  });
+
+  it("re-namespaces the font properties under a consumer's prefix", () => {
+    // The defect class NEH-165/166/171 were: a recipe writing
+    // `var(--hopper-font-…)` directly would ignore `cssVarPrefix` silently.
+    const values = [
+      ...Object.values(createSemanticFonts("optima")),
+      ...Object.values(createSemanticFontWeights("optima")),
+    ].map((d) => d.value);
+    expect(values.every((v) => v.startsWith("var(--optima-"))).toBe(true);
+    expect(values.some((v) => v.includes("--hopper-"))).toBe(false);
+  });
+
+  it("never makes a font property REQUIRED of a host", () => {
+    // The identity `required === colours` is load-bearing and may only move
+    // deliberately (NEH-277). No host defines the font properties today, so
+    // requiring them would break every one of them for no safety gain: an
+    // undefined font falls back to the browser's face and the page stays
+    // readable, where an undefined colour paints nothing.
+    const required = requiredCssCustomProperties();
+    expect(required).toHaveLength(colorTokenNames().length);
+    expect(required.some((p) => p.includes("font-"))).toBe(false);
+  });
+
+  it("names the weight steps the recipes already use", () => {
+    // Same names as Panda's built-in fontWeights tokens on purpose: it is what
+    // lets `fontWeight: "bold"`, written across seven recipes, start reading
+    // the theme without a call site moving. The union is closed — a step
+    // outside it is a stonedog-theme change first.
+    expect(fontWeightTokenNames().sort()).toEqual([
+      "bold",
+      "medium",
+      "normal",
+      "semibold",
+    ]);
+    expect(fontTokenNames().sort()).toEqual(["body", "heading", "mono"]);
+  });
+
+  it("actually reaches the stylesheet", () => {
+    // The whole point of the issue: the properties resolved but no recipe read
+    // them, so nothing downstream of the theme ever changed. Font-family had
+    // ZERO occurrences in the generated CSS before this.
+    // A token DEFINITION proves nothing — the whole defect was properties that
+    // resolved and were never read. These assert the USE: a rule that actually
+    // sets font-family from the token.
+    expect(recipeSource).toMatch(/font-family:\s*var\(--fonts-body\)/);
+    // StyledHeading asks for the heading face as a style prop, and Panda only
+    // reads source text: if that literal is ever computed instead of written,
+    // this rule silently stops being generated.
+    expect(recipeSource).toMatch(/font-family:\s*var\(--fonts-heading\)/);
+    // And the weights now carry the host property rather than a bare number.
+    expect(recipeSource).toContain("--font-weights-bold: var(--hopper-font-weight-bold, 700)");
   });
 });
 

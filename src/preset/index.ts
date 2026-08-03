@@ -30,6 +30,8 @@ import { tooltipRecipe } from "./recipes/tooltip";
 import {
   DEFAULT_CSS_VAR_PREFIX,
   createSemanticColors,
+  createSemanticFontWeights,
+  createSemanticFonts,
   createSemanticSizes,
 } from "./semantic-variables";
 
@@ -170,6 +172,14 @@ export function stonedogStylePreset(options: StonedogStylePresetOptions = {}) {
         tokens: {
           colors: createSemanticColors(cssVarPrefix),
           sizes: createSemanticSizes(cssVarPrefix),
+          /**
+           * The host's typeface (NEH-289). `fontWeights` deliberately reuses
+           * Panda's own token names, so the `fontWeight: "bold"` already
+           * written across seven recipes starts reading the theme without a
+           * call site moving. Both carry fallbacks — see semantic-variables.
+           */
+          fonts: createSemanticFonts(cssVarPrefix),
+          fontWeights: createSemanticFontWeights(cssVarPrefix),
         },
         keyframes: {
           spin: {
@@ -199,7 +209,11 @@ export {
   TEXT_BACKGROUND_PAIRS,
   colorTokenNames,
   createSemanticColors,
+  createSemanticFontWeights,
+  createSemanticFonts,
   createSemanticSizes,
+  fontTokenNames,
+  fontWeightTokenNames,
   getBackgroundForText,
   requiredCssCustomProperties,
 } from "./semantic-variables";

@@ -14,8 +14,15 @@ export const separatorVerticalRecipe = defineRecipe({
         _dark: { backgroundColor: "gray.200" },
       },
       glass: {
-        backgroundColor: "whiteAlpha.500",
-        _dark: { backgroundColor: "blackAlpha.500" },
+        // `whiteAlpha.500` / `blackAlpha.500` were Chakra vocabulary this
+        // package never defined, so the glass separator was invisible in both
+        // colour modes (NEH-301). Panda's `/50` modifier keeps the
+        // translucency the alpha scale was there for — it emits a
+        // `color-mix(…, transparent)` over the token, and falls back to the
+        // solid token where `color-mix` is unsupported, so the separator is
+        // never invisible again.
+        backgroundColor: "borderBgPrimary/50",
+        _dark: { backgroundColor: "borderBgSecondary/50" },
       },
       outline: {
         backgroundColor: "transparent",
@@ -54,8 +61,9 @@ export const separatorHorizontalRecipe = defineRecipe({
         _dark: { backgroundColor: "gray.200" },
       },
       glass: {
-        backgroundColor: "whiteAlpha.500",
-        _dark: { backgroundColor: "blackAlpha.500" },
+        // See the vertical recipe above — same defect, same fix (NEH-301).
+        backgroundColor: "borderBgPrimary/50",
+        _dark: { backgroundColor: "borderBgSecondary/50" },
       },
       outline: {
         backgroundColor: "transparent",

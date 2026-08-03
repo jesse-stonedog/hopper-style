@@ -80,7 +80,21 @@ export const boxRecipe = defineRecipe({
         borderColor: "gray.700",
         borderWidth: "1px",
         boxShadow: "md",
-        color: "whiteAlpha.900",
+        /**
+         * `whiteAlpha.900` was undefined vocabulary, so this never painted and
+         * matte text inherited whatever it landed on — dark-on-dark against
+         * the fixed gradient above (NEH-301).
+         *
+         * `white`, not a token, and that is deliberate. The surface here is
+         * `gray.800`→`gray.900`: a FIXED dark gradient that does not follow the
+         * host's theme. Pointing the text at a host token while the surface
+         * stays fixed is how you get dark-on-dark in a light theme — a
+         * contrast regression traded for a style-rule win. The literal is the
+         * honest description of what matte currently is, and it joins the
+         * tracked literal-colour cleanup (`gray.*`, `black`/`white` in
+         * input-text.ts) that has to move the surface and the text together.
+         */
+        color: "white",
         borderRadius: "lg",
         fontWeight: "bold",
       },

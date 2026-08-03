@@ -52,7 +52,9 @@ export const stackRecipe = defineRecipe({
             },
         },
         aurora: {
-            backgroundImage: `linear-gradient(to right, "textPrimary", "secondary")`,
+            // Quoted token names are CSS strings, so this gradient was invalid
+            // and never painted (NEH-301). `{colors.X}` substitutes.
+            backgroundImage: `linear-gradient(to right, {colors.boxBgAccent}, {colors.boxBgSecondary})`,
             color: "textPrimary",
             borderColor: "transparent",
         },
@@ -63,12 +65,13 @@ export const stackRecipe = defineRecipe({
             color: "textPrimary",
         },
         matte: {
-            bg: "secondary",
-            color: "textPrimary",
+            // `secondary` was undefined vocabulary — never painted (NEH-301).
+            bg: "boxBgSecondary",
+            color: "textSecondary",
             borderColor: "borderBgPrimary",
         },
         ghost: {
-            bg: "secondary",
+            bg: "boxBgSecondary",
             border: "none",
         },
         none: {

@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/experimental-ct-react";
+import type { Locator } from "@playwright/test";
 import StyledInputBool from "./StyledInputBool";
 
 /**
@@ -61,48 +62,93 @@ test.describe("StyledInputBool", () => {
     expect(box!.width).toBeLessThanOrEqual(viewport!.width);
   });
 
+  /**
+   * These assert only on properties a native checkbox actually PAINTS, and
+   * that distinction is the whole lesson of NEH-234.
+   *
+   * The control is `<input type="checkbox">` at `appearance: auto`, so the
+   * widget is drawn by the UA. Chromium *computes* `background-color` and
+   * `border-*` on it and then paints neither — verified in this harness by
+   * screenshotting a raw input with a red border and a slate background and
+   * getting back the default white box. So the obvious assertion is worse than
+   * no assertion: the previous version of this test read `backgroundColor` off
+   * solid and ghost, saw two different values, and passed, while both
+   * checkboxes were drawn identically on screen. A green test measuring
+   * something invisible is how this defect survived long enough to be filed,
+   * attempted, and filed again.
+   *
+   * What the same probe showed the widget DOES honour, and what these therefore
+   * assert on: `box-shadow`, `accent-color`, and `outline`.
+   */
+  const painted = (component: Locator, testId: string) =>
+    component.getByTestId(testId).evaluate((el) => {
+      const s = getComputedStyle(el);
+      return `${s.boxShadow} | ${s.accentColor}`;
+    });
+
   test("the variant reaches the control", async ({ mount }) => {
-    // A variant that does not change a pixel means the recipe is not reaching
-    // the element — the failure mode that made NEH-165 invisible for months.
-    //
     // Both in ONE mount: a second `mount()` in the same test fails with
     // "container that already has a React root". Side by side is better anyway,
     // since it compares them under identical layout.
-    //
-    // `solid` vs `ghost`, NOT `solid` vs `outline`. The recipe defines those
-    // two identically — same `buttonBgAccent`, same `textPrimary` — so an
-    // outline checkbox is pixel-for-pixel a solid one, and asserting otherwise
-    // pins a bug rather than a behaviour. Filed as NEH-234.
-    const component = await mount(
-      <>
-        <StyledInputBool label="solid" variant="solid" data-testid="solid" />
-        <StyledInputBool label="ghost" variant="ghost" data-testid="ghost" />
-      </>,
-    );
-    const bg = (testId: string) =>
-      component
-        .getByTestId(testId)
-        .evaluate((el) => getComputedStyle(el).backgroundColor);
-
-    expect(await bg("solid")).not.toBe(await bg("ghost"));
-  });
-
-  test("solid and outline are currently indistinguishable", async ({ mount }) => {
-    // Pinning a DEFECT, deliberately, so the fix is noticed rather than
-    // silently absorbed: two of the five app-wide appearances render a checkbox
-    // identically, so choosing "outline" does nothing here. Delete this test
-    // when NEH-234 lands.
     const component = await mount(
       <>
         <StyledInputBool label="solid" variant="solid" data-testid="solid" />
         <StyledInputBool label="outline" variant="outline" data-testid="outline" />
       </>,
     );
-    const bg = (testId: string) =>
-      component
-        .getByTestId(testId)
-        .evaluate((el) => getComputedStyle(el).backgroundColor);
+    expect(await painted(component, "solid")).not.toBe(
+      await painted(component, "outline"),
+    );
+  });
 
-    expect(await bg("solid")).toBe(await bg("outline"));
+  test("solid and outline are visually distinct", async ({ mount }) => {
+    // NEH-234: these two of the five app-wide appearances were declared
+    // identically, so a user switching the whole app from solid to outline
+    // watched every other control change and every checkbox stay put.
+    //
+    // `outline` earns its name through a ring the UA does paint, since the
+    // `border` that would express it on any other recipe is discarded here.
+    const component = await mount(
+      <>
+        <StyledInputBool label="solid" variant="solid" data-testid="solid" />
+        <StyledInputBool label="outline" variant="outline" data-testid="outline" />
+      </>,
+    );
+    const ring = (testId: string) =>
+      component.getByTestId(testId).evaluate((el) => getComputedStyle(el).boxShadow);
+
+    expect(await ring("solid")).toBe("none");
+    expect(await ring("outline")).not.toBe("none");
+    // Themed, not a literal — the ring has to follow the host like everything
+    // else. This is the harness theme's `--hopper-box-primary-border`.
+    expect(await ring("outline")).toContain("rgb(71, 85, 105)");
+  });
+
+  test("the checked state is themed rather than the browser's default blue", async ({
+    mount,
+  }) => {
+    // `accent-color` is one of the few properties the native widget honours,
+    // and it is what carries the host's theme into the tick. Without it a
+    // checked box is Chromium's blue in every theme this package can wear.
+    const component = await mount(
+      <StyledInputBool label="on" defaultChecked data-testid="on" />,
+    );
+    const accent = await component
+      .getByTestId("on")
+      .evaluate((el) => getComputedStyle(el).accentColor);
+    expect(accent).not.toBe("auto");
+  });
+
+  test("the focus ring follows the theme", async ({ mount, page }) => {
+    // It was a hardcoded `#3182ce` — Panda's blue, fixed in every theme
+    // including dark and high-contrast, where it is the one thing a keyboard
+    // user cannot afford to lose (NEH-234).
+    const component = await mount(<StyledInputBool label="on" data-testid="on" />);
+    await page.keyboard.press("Tab");
+    const ring = await component
+      .getByTestId("on")
+      .evaluate((el) => getComputedStyle(el).outlineColor);
+    // The harness theme's `--hopper-text-pop-text`.
+    expect(ring).toBe("rgb(56, 189, 248)");
   });
 });
