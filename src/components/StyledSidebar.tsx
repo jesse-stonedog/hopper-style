@@ -27,8 +27,19 @@ import StyledTooltip from "./StyledTooltip";
  * changes state on hover.
  */
 
-/** Minimum interactive size. Above WCAG 2.5.5's 44 on purpose (PRD §A4). */
-const MIN_TARGET = "48px";
+/**
+ * Minimum interactive size, stated as a `minHeight` on the element's own base
+ * rather than left to emerge from padding — so no density step, font profile
+ * or zoom level can erode it (PRD §A4).
+ *
+ * Two floors, not one. 48 is the hard minimum the whole package holds itself
+ * to; the PRD asks for 60 "where layout allows", and a full-width item row is
+ * exactly where it allows. The narrow rail controls (pager, collapse) sit in a
+ * strip beside the list, where 60 would crowd the tools themselves, so they
+ * keep the 48 floor.
+ */
+const ITEM_MIN_TARGET = "60px";
+const CONTROL_MIN_TARGET = "48px";
 
 export interface SidebarItem {
   id: string;
@@ -66,31 +77,64 @@ const ItemButton = styled("button", {
     display: "flex",
     alignItems: "center",
     gap: "3",
-    width: "100%",
-    minHeight: MIN_TARGET,
+    // `flex: 1` + `minWidth: 0`, not `width: 100%`. The row also holds the help
+    // control, and a child that insists on the full width pushes that control
+    // off the edge — which at 375px is the whole reason the help exists.
+    flex: "1 1 auto",
+    minWidth: 0,
+    minHeight: ITEM_MIN_TARGET,
     px: "3",
     py: "2",
     textAlign: "left",
     borderRadius: "md",
+    // The width is constant across states, so selecting an item cannot change
+    // its size and shuffle everything below it. Only the colour moves — and
+    // colour is never the only signal (see the label's weight below).
     borderWidth: "2px",
     borderStyle: "solid",
-    // Transparent rather than absent, so selecting an item cannot change its
-    // size and shuffle everything below it.
-    borderColor: "transparent",
-    background: "transparent",
     cursor: "pointer",
   },
 });
 
+/**
+ * The label column.
+ *
+ * A plain styled span rather than `StyledVStack`, purely so these two
+ * declarations are statically extractable: `minWidth: 0` is what lets a long
+ * tool name wrap instead of overflowing the rail (a flex child's default
+ * `min-width: auto` refuses to shrink below its longest word), and
+ * `overflowWrap` handles the single word longer than the rail (PRD §A3).
+ */
+const ItemLabels = styled("span", {
+  base: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "flex-start",
+    minWidth: 0,
+    overflowWrap: "anywhere",
+  },
+});
+
+/** Keeps a host's icon from being squashed by a long label. */
+const ItemIcon = styled("span", {
+  base: { display: "inline-flex", flexShrink: 0 },
+});
+
+/** Keeps the help control at its full size when the label is long. */
+const HelpSlot = styled("span", {
+  base: { display: "inline-flex", flexShrink: 0 },
+});
+
 const PagerButton = styled("button", {
   base: {
-    minWidth: MIN_TARGET,
-    minHeight: MIN_TARGET,
+    minWidth: CONTROL_MIN_TARGET,
+    minHeight: CONTROL_MIN_TARGET,
     px: "3",
     borderRadius: "md",
     borderWidth: "1px",
     borderStyle: "solid",
     borderColor: "borderBgPrimary",
+    color: "textPrimary",
     cursor: "pointer",
     _disabled: { opacity: 0.5, cursor: "not-allowed" },
   },
@@ -98,13 +142,14 @@ const PagerButton = styled("button", {
 
 const CollapseButton = styled("button", {
   base: {
-    minWidth: MIN_TARGET,
-    minHeight: MIN_TARGET,
+    minWidth: CONTROL_MIN_TARGET,
+    minHeight: CONTROL_MIN_TARGET,
     px: "2",
     borderRadius: "md",
     borderWidth: "1px",
     borderStyle: "solid",
     borderColor: "borderBgPrimary",
+    color: "textPrimary",
     cursor: "pointer",
   },
 });
@@ -155,34 +200,49 @@ const StyledSidebar: React.FC<StyledSidebarProps> = ({
               aria-current={isSelected ? "true" : undefined}
               data-testid={`sidebar-item-${item.id}`}
               data-selected={isSelected ? "true" : undefined}
-              style={
-                isSelected
-                  ? // Border AND background, so selection never rests on colour
-                    // alone (PRD §C10).
-                    { borderColor: "var(--colors-border-bg-accent)", background: "var(--colors-box-bg-accent)" }
-                  : undefined
-              }
+              // Tokens, as ternaries on Panda style props — never an inline
+              // `style={{ background: "var(--colors-…)" }}`. A literal custom
+              // property in a component bypasses the token layer, which is the
+              // only thing that re-points under a consumer's `cssVarPrefix`,
+              // and it also never reaches the stylesheet so nothing can grep
+              // for it. This is the package's oldest defect class (CLAUDE.md,
+              // "Token compliance").
+              borderColor={isSelected ? "borderBgAccent" : "transparent"}
+              background={isSelected ? "boxBgAccent" : "transparent"}
             >
-              {item.icon}
-              <StyledVStack gap={0} alignItems="flex-start">
+              {item.icon !== undefined && item.icon !== null && <ItemIcon>{item.icon}</ItemIcon>}
+              <ItemLabels>
                 {/* The name is always rendered — collapsed only drops the
                     description. An icon-only rail would reinstate exactly the
                     guess-the-glyph problem this component exists to remove. */}
-                <StyledText fontWeight={isSelected ? "bold" : "normal"}>{item.label}</StyledText>
+                <StyledText
+                  // Weight, not just colour. Selection must survive greyscale,
+                  // a high-contrast theme and colour blindness (PRD §C10) —
+                  // and `aria-current` carries it to assistive technology.
+                  fontWeight={isSelected ? "bold" : "normal"}
+                  color={isSelected ? "textAccent" : "textPrimary"}
+                >
+                  {item.label}
+                </StyledText>
                 {!collapsed && item.description && (
-                  <StyledText fontSize="sm" color="fg.muted">
+                  // `size`, not `fontSize`: StyledText writes its resolved size
+                  // into an inline `style`, which beats any class a `fontSize`
+                  // prop would generate. The prop looked right and did nothing.
+                  <StyledText size="sm" color={isSelected ? "textAccent" : "textSecondary"}>
                     {item.description}
                   </StyledText>
                 )}
-              </StyledVStack>
+              </ItemLabels>
             </ItemButton>
 
             {item.help && (
               // trigger="click" — a drifting pointer must not spawn this, nor
               // dismiss one being read.
-              <StyledTooltip tooltip={item.help} trigger="click" helpLabel={`What does ${item.label} do?`}>
-                <span />
-              </StyledTooltip>
+              <HelpSlot>
+                <StyledTooltip tooltip={item.help} trigger="click" helpLabel={`What does ${item.label} do?`}>
+                  <span />
+                </StyledTooltip>
+              </HelpSlot>
             )}
           </StyledHStack>
         );
@@ -204,9 +264,16 @@ const StyledSidebar: React.FC<StyledSidebarProps> = ({
       borderRightWidth="1px"
       borderColor="borderBgPrimary"
       p={2}
+      // `height: 100%` + `minHeight: 0` is what makes scroll mode work at all.
+      // StyledScrollbar is `flex: 1; min-height: 0; overflow: auto`, which can
+      // only produce a scrollbar inside a column whose height is constrained.
+      // Against an auto-height parent `height: 100%` computes to auto, so this
+      // costs a host that does not constrain the sidebar nothing.
+      height="100%"
+      minHeight="0"
       noWrap
     >
-      <StyledVStack gap={2} alignItems="stretch">
+      <StyledVStack gap={2} alignItems="stretch" height="100%" minHeight="0">
         <StyledHStack justifyContent="space-between" alignItems="center">
           {heading && <StyledText fontWeight="bold">{heading}</StyledText>}
           {onCollapsedChange && (
@@ -244,7 +311,7 @@ const StyledSidebar: React.FC<StyledSidebarProps> = ({
                   ‹
                 </PagerButton>
                 {/* Position is stated, not implied by a row of dots. */}
-                <StyledText fontSize="sm" data-testid="sidebar-page-status">
+                <StyledText size="sm" data-testid="sidebar-page-status">
                   Page {safePage + 1} of {pageCount}
                 </StyledText>
                 <PagerButton
@@ -260,7 +327,7 @@ const StyledSidebar: React.FC<StyledSidebarProps> = ({
             )}
           </>
         ) : (
-          <StyledScrollbar>{list}</StyledScrollbar>
+          <StyledScrollbar data-testid="sidebar-scroll">{list}</StyledScrollbar>
         )}
       </StyledVStack>
     </StyledBox>

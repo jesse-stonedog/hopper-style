@@ -374,6 +374,24 @@ layout values in `SIZE_TOKENS` — and reference it by name. The token layer is
 the only thing that re-points under a custom prefix, so bypassing it is exactly
 what breaks the second consumer while looking fine to the first.
 
+A fourth turned up in `StyledSidebar` (NEH-223), and it is the one worth
+remembering because it hid inside a *component* rather than a recipe:
+
+- **`color="fg.muted"`** on the item descriptions — Chakra vocabulary, not this
+  package's, so Panda emitted the literal `color: fg.muted` and the browser
+  dropped it. Those descriptions had never rendered muted.
+- **`style={{ background: "var(--colors-box-bg-accent)" }}`** for the selected
+  row. An inline style bypasses the token layer *and* never reaches the
+  stylesheet, so no grep could find it. Both are now Panda style props holding
+  ternaries — `background={isSelected ? "boxBgAccent" : "transparent"}` — which
+  the extractor reads both branches of.
+
+**The guard is now general, not per-instance.** `token-contract.test.ts` scans
+every colour declaration in the generated stylesheet and fails on any value that
+is neither a `var(…)` reference nor real CSS. It carries a `KNOWN_DEAD`
+allowlist of nine pre-existing offenders (NEH-301) so no *new* one can land;
+shrinking that list is the point, growing it needs an argument.
+
 Still outstanding, inherited and **not** fixed: literal `gray.*`, `rgba(...)`,
 and `color: "black"` / `backgroundColor: "white"` in `recipes/input-text.ts`.
 These misread under dark and high-contrast themes. Fixing them changes rendering

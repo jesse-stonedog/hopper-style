@@ -87,6 +87,58 @@ describe("recipes honour the configurable prefix", () => {
     // theming AND of contrast validation.
     expect(recipeSource).not.toContain("var(--text-primary)");
   });
+
+  /**
+   * The general form of the `bg: "buttonBgHover"` bug, rather than one more
+   * named instance of it.
+   *
+   * Panda passes an unknown token through as a literal, so a typo or a token
+   * borrowed from another design system's vocabulary emits something like
+   * `color: fg.muted` — not a valid CSS value, silently discarded by the
+   * browser, invisible to the type-checker and to every behaviour test. Three
+   * of these have now been found by hand, one of them (`fg.muted`, on
+   * StyledSidebar's item descriptions) as recently as NEH-223. Grepping the
+   * generated stylesheet is the only thing that sees them at all.
+   *
+   * KNOWN, PRE-EXISTING, and deliberately not fixed here (NEH-301): the entries
+   * below are dead declarations in other recipes, found by this test when it
+   * was written. Fixing them changes rendering, so each wants
+   * its own PR and a real look at the result. The allowlist exists so no NEW
+   * one can land; shrinking it is the point, growing it needs an argument.
+   */
+  it("never emits a colour value that is neither a token reference nor real CSS", () => {
+    const KNOWN_DEAD = new Set([
+      "background: bgAccent",
+      "background: primary",
+      "background: primary.600",
+      "background: secondary",
+      "background-color: blackAlpha.500",
+      "background-color: whiteAlpha.500",
+      "border-color: primary",
+      "border-color: whiteAlpha.300",
+      "color: whiteAlpha.900",
+    ]);
+
+    const COLOUR_PROPERTY =
+      /^\s*(color|background|background-color|border-color|border-[a-z]+-color|fill|stroke|outline-color|scrollbar-color|caret-color|text-decoration-color|accent-color|column-rule-color)\s*:\s*([^;]+);/;
+    // Everything a browser can actually paint from. A token reference is the
+    // first case; the rest are literals, which the package bans separately but
+    // which at least render.
+    const REAL_CSS =
+      /var\(|#|rgb|hsl|oklch|lab\(|gradient|^(transparent|currentColor|inherit|initial|unset|revert|none|auto|black|white|purple)$/i;
+
+    const offenders = new Set<string>();
+    for (const line of recipeSource.split("\n")) {
+      const match = COLOUR_PROPERTY.exec(line);
+      if (!match) continue;
+      const [, property, rawValue] = match;
+      const value = rawValue!.trim();
+      if (REAL_CSS.test(value)) continue;
+      offenders.add(`${property}: ${value}`);
+    }
+
+    expect([...offenders].filter((o) => !KNOWN_DEAD.has(o)).sort()).toEqual([]);
+  });
 });
 
 describe("contrast pairings", () => {
