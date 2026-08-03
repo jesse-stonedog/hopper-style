@@ -98,6 +98,38 @@ const staticCssRecipes = Object.fromEntries(
 ) as Record<keyof typeof recipes, ["*"]>;
 
 /**
+ * Force the flexbox alignment utilities into the stylesheet (NEH-288).
+ *
+ * Same reasoning as the recipes above, one layer down. `StyledHStack` and
+ * `StyledVStack` accept `align`/`justify` as aliases and rename them to
+ * `alignItems`/`justifyContent` at runtime. Panda's extractor only reads source
+ * text: it sees `align="baseline"`, finds no utility by that name, and generates
+ * nothing — yet the component emits `ai_baseline`. Same for any value the caller
+ * computes rather than writes as a literal.
+ *
+ * That is this package's recurring failure mode: a class name with no rule
+ * behind it, which produces no build error, no console warning, and renders as
+ * silently-wrong layout. Fourteen declarations is a cheap price for closing it.
+ */
+const staticCssAlignment = [
+  {
+    properties: {
+      alignItems: ["flex-start", "flex-end", "center", "baseline", "stretch", "start", "end"],
+      justifyContent: [
+        "flex-start",
+        "flex-end",
+        "center",
+        "space-between",
+        "space-around",
+        "space-evenly",
+        "start",
+        "end",
+      ],
+    },
+  },
+];
+
+/**
  * The stonedog-style Panda preset: colour tokens, breakpoints, keyframes, and
  * the 22 recipes the component library is built on.
  *
@@ -157,6 +189,7 @@ export function stonedogStylePreset(options: StonedogStylePresetOptions = {}) {
     },
     staticCss: {
       recipes: staticCssRecipes,
+      css: staticCssAlignment,
     },
   });
 }

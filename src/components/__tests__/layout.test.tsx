@@ -1,6 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import StyledBox from "../StyledBox";
+import StyledHStack from "../StyledHStack";
 import StyledStack from "../StyledStack";
+import StyledVStack from "../StyledVStack";
 import StyledSeparator from "../StyledSeparator";
 
 describe("StyledBox", () => {
@@ -108,6 +110,52 @@ describe("StyledStack", () => {
       </StyledStack>,
     );
     expect(screen.getByText("responsive")).toBeInTheDocument();
+  });
+});
+
+/**
+ * NEH-288. The `hstack`/`vstack` patterns hard-code `alignItems: "center"` and
+ * then spread the caller's remaining props over it. Only a prop literally named
+ * `alignItems` lands in that spread and wins; anything else survives into
+ * `css()` as an unknown key and emits a class name with no rule behind it,
+ * while the hard-coded centre stays.
+ *
+ * These assert the emitted class rather than a computed style because jsdom has
+ * no layout engine — the pixel proof is in `StyledHStack.ct.tsx`.
+ */
+describe.each([
+  ["StyledHStack", StyledHStack],
+  ["StyledVStack", StyledVStack],
+] as const)("%s alignment props", (_name, Stack) => {
+  const alignments = ["flex-start", "flex-end", "baseline", "stretch"] as const;
+
+  it.each(alignments)("maps alignItems=%s onto the alignItems utility", (value) => {
+    const { container } = render(<Stack alignItems={value}>x</Stack>);
+    const className = (container.firstChild as HTMLElement).className;
+
+    expect(className).toContain(`ai_${value}`);
+    // The pattern's hard-coded default must have been overridden, not joined.
+    expect(className).not.toContain("ai_center");
+    // `align_*` is not a Panda utility: a class with no rule behind it.
+    expect(className).not.toMatch(/\balign_/);
+  });
+
+  it.each(alignments)("treats align=%s as an alias for alignItems", (value) => {
+    const { container } = render(<Stack align={value}>x</Stack>);
+    const className = (container.firstChild as HTMLElement).className;
+
+    expect(className).toContain(`ai_${value}`);
+    expect(className).not.toMatch(/\balign_/);
+  });
+
+  it("still centres when neither prop is given", () => {
+    const { container } = render(<Stack>x</Stack>);
+    expect((container.firstChild as HTMLElement).className).toContain("ai_center");
+  });
+
+  it("maps justifyContent onto the justifyContent utility", () => {
+    const { container } = render(<Stack justifyContent="space-between">x</Stack>);
+    expect((container.firstChild as HTMLElement).className).toContain("jc_space-between");
   });
 });
 
