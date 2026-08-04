@@ -79,6 +79,44 @@ describe("TitleLogo", () => {
       }
     });
 
+    /**
+     * Metrics must be real CSS, not Panda token keys.
+     *
+     * They are applied as inline `style`, because Panda cannot statically
+     * resolve a runtime Record lookup — a token key like "lg" would simply be
+     * an invalid inline value and the text would render at the inherited size.
+     * Font sizes go through the host's custom properties so the host's scale
+     * still applies, with a literal fallback for a host that defines none.
+     */
+    it("expresses type sizes as real CSS, not token keys", () => {
+      for (const size of TITLE_LOGO_SIZES) {
+        const { title, subtitle } = TITLE_LOGO_METRICS[size];
+        expect(title).toMatch(/^var\(--font-sizes-[\w-]+, .+\)$/);
+        expect(subtitle).toMatch(/^var\(--font-sizes-[\w-]+, .+\)$/);
+      }
+    });
+
+    /**
+     * The regression that reached a consumer: passing these as Panda style
+     * props emitted no CSS at all, so the mark rendered at its natural size
+     * (512px) and blew the masthead out. Inline style is what makes the
+     * component immune to a consumer's `include` glob.
+     */
+    it("applies the mark's size inline, where extraction cannot fail", () => {
+      render(<TitleLogo title="Brand" size="small" logo={<svg />} />);
+      const mark = screen.getByTestId("title-logo-mark");
+
+      expect(mark.style.width).toBe(TITLE_LOGO_METRICS.small.mark);
+      expect(mark.style.height).toBe(TITLE_LOGO_METRICS.small.mark);
+    });
+
+    it("applies the gap inline too", () => {
+      render(<TitleLogo title="Brand" size="large" logo={<svg />} />);
+      expect(screen.getByTestId("title-logo").style.gap).toBe(
+        TITLE_LOGO_METRICS.large.gap,
+      );
+    });
+
     it("falls back to medium for a size that is not one of the three", () => {
       // Reaches this repo from storage or an API in real use, and may predate
       // a rename — so it must not throw or render nothing.
