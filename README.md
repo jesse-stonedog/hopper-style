@@ -24,10 +24,10 @@ submodule if you want to develop against it:
 
 ```bash
 # Option A — git dependency, pinned to a commit
-npm install "git+https://github.com/jesse-stonedog/stonedog-style.git#<sha>"
+npm install "git+https://github.com/stonedog-code/stonedog-style.git#<sha>"
 
 # Option B — submodule + file: dependency (use this in a monorepo)
-git submodule add git@github.com:jesse-stonedog/stonedog-style.git packages/stonedog-style
+git submodule add git@github.com:stonedog-code/stonedog-style.git packages/stonedog-style
 #   then in the consuming app's package.json:
 #   "stonedog-style": "file:../../packages/stonedog-style"
 ```
@@ -287,7 +287,7 @@ paths; nothing else here is optional.
 
 ```bash
 # 1. Take the dependency (see Install — it is not on npm)
-npm install "git+https://github.com/jesse-stonedog/stonedog-style.git#<sha>"
+npm install "git+https://github.com/stonedog-code/stonedog-style.git#<sha>"
 npm install -D @pandacss/dev @types/react @types/react-dom
 ```
 
