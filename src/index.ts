@@ -113,6 +113,14 @@ export type { StyledSeparatorProps } from "./components/StyledSeparator";
 export { default as StyledHrRule } from "./components/StyledHrRule";
 export type { StyledHrRuleProps } from "./components/StyledHrRule";
 
+export {
+  default as TitleLogo,
+  TITLE_LOGO_METRICS,
+  TITLE_LOGO_SIZES,
+  isTitleLogoSize,
+} from "./components/TitleLogo";
+export type { TitleLogoProps, TitleLogoSize } from "./components/TitleLogo";
+
 // ---------------------------------------------------------------------------
 // Icons — the seam, not the artwork. See the README.
 // ---------------------------------------------------------------------------
