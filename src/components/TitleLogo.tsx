@@ -54,23 +54,45 @@ export function isTitleLogoSize(value: unknown): value is TitleLogoSize {
 interface SizeMetrics {
   /** Box the mark is given. Square: every mark here is a round or square badge. */
   readonly mark: string;
-  /** Wordmark size, as a `--font-sizes-*` key so the host's scale still applies. */
+  /** Wordmark size. */
   readonly title: string;
   readonly subtitle: string;
   readonly gap: string;
 }
 
 /**
- * rem throughout, never px.
+ * Every value is real CSS, applied inline — NOT a Panda token key.
  *
- * A logo pinned in px ignores the browser's own font-size setting, which is the
- * affordance people with low vision actually reach for — and a header that
- * refuses to grow with it is the one piece of chrome on every page.
+ * These are consumed as `style={{ … }}` because Panda cannot statically resolve
+ * a runtime Record lookup (see the render below). A token key like `"lg"` would
+ * be meaningless as an inline value, so the type scale is reached through the
+ * host's own custom properties instead, exactly as `fontSizeMap` does: the host
+ * that defines `--font-sizes-lg` gets its scale, and the fallback covers a host
+ * that defines nothing.
+ *
+ * rem throughout, never px. A logo pinned in px ignores the browser's own
+ * font-size setting — the affordance people with low vision actually reach for
+ * — and this is the one piece of chrome on every page.
  */
 export const TITLE_LOGO_METRICS: Record<TitleLogoSize, SizeMetrics> = {
-  small: { mark: "2rem", title: "lg", subtitle: "xs", gap: "0.5rem" },
-  medium: { mark: "3rem", title: "2xl", subtitle: "sm", gap: "0.75rem" },
-  large: { mark: "4.5rem", title: "4xl", subtitle: "md", gap: "1rem" },
+  small: {
+    mark: "2rem",
+    title: "var(--font-sizes-lg, 1.125rem)",
+    subtitle: "var(--font-sizes-xs, 0.75rem)",
+    gap: "0.5rem",
+  },
+  medium: {
+    mark: "3rem",
+    title: "var(--font-sizes-2xl, 1.5rem)",
+    subtitle: "var(--font-sizes-sm, 0.875rem)",
+    gap: "0.75rem",
+  },
+  large: {
+    mark: "4.5rem",
+    title: "var(--font-sizes-4xl, 2.25rem)",
+    subtitle: "var(--font-sizes-md, 1rem)",
+    gap: "1rem",
+  },
 };
 
 const Row = styled("span", {
@@ -137,7 +159,24 @@ export const TitleLogo = React.forwardRef<HTMLSpanElement, TitleLogoProps>(
     return (
       <Row
         ref={ref}
-        gap={metrics.gap}
+        // INLINE STYLE, not a Panda prop, and this is load-bearing.
+        //
+        // Panda finds styles by STATICALLY parsing source at the consumer's
+        // build. `gap={metrics.gap}` is a runtime lookup on a Record — Panda
+        // sees a non-literal, cannot resolve it, and emits no rule. The class
+        // still lands in the DOM, so it fails completely silently.
+        //
+        // Caught in optima-cloud-saas: the row rendered `gap: normal` and the
+        // mark at its natural 512px instead of 2rem, blowing the masthead out
+        // to 612px tall — while the literal styles in the `base` blocks below
+        // (display, alignItems, flexShrink, objectFit) all applied correctly.
+        // That split is the tell: literals extract, variables do not.
+        //
+        // Anything size-dependent is therefore inline. It also means this
+        // component cannot be broken by a consumer's `include` glob, which for
+        // a published design-system component is worth more than the styling
+        // indirection it gives up.
+        style={{ gap: metrics.gap, ...(rest.style ?? {}) }}
         data-testid="title-logo"
         data-size={size}
         {...(accessibleName ? { role: "img", "aria-label": accessibleName } : {})}
@@ -146,8 +185,7 @@ export const TitleLogo = React.forwardRef<HTMLSpanElement, TitleLogoProps>(
         {logo ? (
           <Mark
             data-testid="title-logo-mark"
-            width={metrics.mark}
-            height={metrics.mark}
+            style={{ width: metrics.mark, height: metrics.mark }}
             // Hidden when the row already carries the name: announcing the mark
             // separately would repeat it.
             {...(accessibleName ? { "aria-hidden": true } : {})}
@@ -159,7 +197,7 @@ export const TitleLogo = React.forwardRef<HTMLSpanElement, TitleLogoProps>(
         <TextColumn>
           <styled.span
             data-testid="title-logo-title"
-            fontSize={metrics.title}
+            style={{ fontSize: metrics.title }}
             fontWeight="600"
             lineHeight="1.1"
             letterSpacing="-0.01em"
@@ -169,7 +207,7 @@ export const TitleLogo = React.forwardRef<HTMLSpanElement, TitleLogoProps>(
           {subtitle ? (
             <styled.span
               data-testid="title-logo-subtitle"
-              fontSize={metrics.subtitle}
+              style={{ fontSize: metrics.subtitle }}
               lineHeight="1.2"
               opacity={0.75}
             >
