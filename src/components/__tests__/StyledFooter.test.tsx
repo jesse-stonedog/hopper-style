@@ -231,3 +231,57 @@ describe("StyledFooter", () => {
     });
   });
 });
+
+describe("StyledFooter bar layout (NEH-397)", () => {
+  it("REGRESSION: the toggle is the LAST element in the bar, after actions", () => {
+    // Previously the toggle rendered BEFORE `actions`, so it could never be the
+    // rightmost control however the row was laid out. On Optima that surfaced
+    // as "Details" under the copyright with the action button beside it.
+    render(
+      <StyledFooter
+        copyright="© 2026 Example"
+        actions={<button type="button">Theme</button>}
+      />,
+    );
+    const toggle = screen.getByTestId("footer-toggle");
+    const action = screen.getByRole("button", { name: "Theme" });
+
+    // compareDocumentPosition is the honest test in jsdom: it asserts source
+    // order, which is what determines visual order in a row. jsdom has no
+    // layout engine, so an actual x-coordinate assertion here would be
+    // meaningless — that belongs in the CT tier.
+    expect(
+      action.compareDocumentPosition(toggle) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("the left column does not claim the whole row", () => {
+    // boxRecipe's base is width:100%. Left unoverridden, the copyright column
+    // consumes the line and the actions wrap to a second row. Pinning the
+    // inline style is crude, but it is the property that decides the bug and
+    // jsdom cannot measure the consequence.
+    // Targeted by testid, not by walking up from the copyright: StyledBox
+    // nests its children three divs deep, so parentElement is an inner wrapper
+    // and asserting on it silently measures the wrong element.
+    render(<StyledFooter copyright="© 2026 Example" />);
+    const left = screen.getByTestId("footer-identity");
+    expect(left.style.flex).toBe("1 1 auto");
+    expect(left.style.width).toBe("auto");
+    expect(left.style.minWidth).toBe("0"); // React renders unitless 0; `min-width: 0` is valid CSS
+  });
+
+  it("the action group is pinned right", () => {
+    render(
+      <StyledFooter copyright="© 2026 Example" actions={<button type="button">Theme</button>} />,
+    );
+    const group = screen.getByTestId("footer-toggle").parentElement;
+    expect(group?.style.marginInlineStart).toBe("auto");
+  });
+
+  it("still renders with no actions, no legend, no version, no status", () => {
+    // rozcards and Optima use it bare; only `copyright` is required.
+    render(<StyledFooter copyright="© 2026 RozCards" />);
+    expect(screen.getByTestId("footer-copyright").textContent).toBe("© 2026 RozCards");
+    expect(screen.getByTestId("footer-toggle")).toBeTruthy();
+  });
+});
