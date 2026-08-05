@@ -97,6 +97,9 @@ export type { StyledVStackProps } from "./components/StyledVStack";
 export { default as StyledScrollbar } from "./components/StyledScrollbar";
 export { default as StyledSidebar, StyledSidebar as Sidebar } from "./components/StyledSidebar";
 export type { StyledSidebarProps, SidebarItem } from "./components/StyledSidebar";
+
+export { default as StyledFooter, StyledFooter as Footer } from "./components/StyledFooter";
+export type { StyledFooterProps, StyledFooterVersion } from "./components/StyledFooter";
 export type { StyledScrollbarProps } from "./components/StyledScrollbar";
 
 // ---------------------------------------------------------------------------
