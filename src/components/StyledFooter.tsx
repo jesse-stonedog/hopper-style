@@ -110,6 +110,40 @@ export interface StyledFooterVersion {
   build?: string | undefined;
 }
 
+export interface StyledFooterStatusBadge {
+  /**
+   * Where to load the badge image from.
+   *
+   * **A SAME-ORIGIN path, not the monitoring vendor's URL.** This is the whole
+   * reason the prop takes a URL rather than a monitor id, and it is not a
+   * preference:
+   *
+   * A cross-origin image that fails to load logs a console error, and nothing
+   * the element does can suppress it — `onError` can hide the picture but
+   * cannot un-log the request. HopperGuard's post-deploy smoke asserts zero
+   * console errors, so a monitoring host having a bad day **withholds a
+   * production release tag**. That has already happened twice (NEH-387), which
+   * is why an embedded status page was removed from that app entirely.
+   *
+   * The shape that works is a route on your own origin that proxies the vendor
+   * and **always answers with an image** — a placeholder SVG on failure, never
+   * a 4xx/5xx. HopperGuard's `/api/status-badge` does exactly that, and reads
+   * its `UPTIMESIGNAL_MONITOR_ID` from server env, so the id never reaches the
+   * browser and this component never needs to know it.
+   */
+  src: string;
+  /**
+   * Accessible name, used as the image's `alt`. Default: "Service status".
+   *
+   * Not empty by default: the badge carries information (a service is up or it
+   * is not), so it is not decorative, and `alt=""` would hide that from a
+   * screen reader entirely.
+   */
+  label?: string | undefined;
+  /** Optional link to a fuller status page, wrapped around the badge. */
+  href?: string | undefined;
+}
+
 export interface StyledFooterProps {
   /** Always visible. The consumer's own line — no product is named here. */
   copyright: string;
@@ -126,16 +160,25 @@ export interface StyledFooterProps {
   /** Shown in the panel when open. */
   version?: StyledFooterVersion | undefined;
   /**
-   * Shown in the panel when open — service status, links, anything.
+   * An uptime badge, shown in the panel when open.
    *
-   * A slot rather than a URL on purpose. Status badges are moving vendor
-   * (NEH-399), and a component that hard-coded one would need a release to
-   * follow. **Note a real constraint before putting a cross-origin badge here:**
-   * a browser logs a failed image request whatever the element does about it,
-   * and HopperGuard's post-deploy smoke asserts zero console errors — which has
-   * already withheld two release tags (NEH-387). Serve such a badge from a
-   * same-origin path that can fail server-side, rather than pointing an `<img>`
-   * straight at the monitoring host.
+   * **Optional, and the footer is complete without it.** Every product using
+   * this today has a monitor, but a page that has none — a marketing site, a
+   * preview build, a product before its monitor exists — must still render a
+   * correct footer rather than a gap or a broken image. Omitting it renders
+   * nothing at all, and a test pins that.
+   *
+   * See `StyledFooterStatusBadge.src` for why this is a URL and not a monitor
+   * id. It is the difference between a badge and a withheld release tag.
+   */
+  statusBadge?: StyledFooterStatusBadge | undefined;
+  /**
+   * Anything else for the panel — extra links, a build date, a region.
+   *
+   * The general escape hatch, kept alongside `statusBadge` rather than replaced
+   * by it. `statusBadge` exists because three products would otherwise each
+   * hand-roll the same `<img>` and each get the failure handling subtly
+   * different; this is for the cases it does not cover.
    */
   status?: React.ReactNode | undefined;
   /** Controlled open state. Omit to let the component own it. */
@@ -149,11 +192,47 @@ export interface StyledFooterProps {
   "data-testid"?: string | undefined;
 }
 
+/**
+ * The badge, or nothing.
+ *
+ * Hides itself if the image fails rather than leaving a broken-image icon in
+ * the footer. Note what this does NOT do: it cannot prevent the browser logging
+ * the failed request. That is why `src` must be a same-origin route that always
+ * answers with an image — see `StyledFooterStatusBadge.src`. This handles the
+ * cosmetic half; the src choice handles the half that breaks deploys.
+ */
+function StatusBadge({ src, label, href }: StyledFooterStatusBadge) {
+  const [failed, setFailed] = useState(false);
+  if (failed) return null;
+
+  const img = (
+    <img
+      src={src}
+      alt={label ?? "Service status"}
+      // Height only: a badge's width varies with its text ("99.98% uptime" is
+      // wider than "up"), so constraining both would distort it. A literal in
+      // inline style rather than a Panda prop, because a consumer's `include`
+      // glob being wrong would otherwise leave this unsized.
+      style={{ height: "20px", display: "block" }}
+      onError={() => setFailed(true)}
+      data-testid="footer-status-badge"
+    />
+  );
+
+  if (!href) return img;
+  return (
+    <a href={href} target="_blank" rel="noreferrer noopener" data-testid="footer-status-link">
+      {img}
+    </a>
+  );
+}
+
 export function StyledFooter({
   copyright,
   legend,
   actions,
   version,
+  statusBadge,
   status,
   open,
   defaultOpen = false,
@@ -233,6 +312,7 @@ export function StyledFooter({
               {`build ${version.build}`}
             </StyledText>
           )}
+          {statusBadge && <StatusBadge {...statusBadge} />}
           {status}
         </Panel>
       )}
