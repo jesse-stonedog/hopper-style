@@ -99,7 +99,11 @@ export { default as StyledSidebar, StyledSidebar as Sidebar } from "./components
 export type { StyledSidebarProps, SidebarItem } from "./components/StyledSidebar";
 
 export { default as StyledFooter, StyledFooter as Footer } from "./components/StyledFooter";
-export type { StyledFooterProps, StyledFooterVersion } from "./components/StyledFooter";
+export type {
+  StyledFooterProps,
+  StyledFooterVersion,
+  StyledFooterStatusBadge,
+} from "./components/StyledFooter";
 export type { StyledScrollbarProps } from "./components/StyledScrollbar";
 
 // ---------------------------------------------------------------------------

@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import StyledFooter from "../StyledFooter";
 
@@ -140,6 +140,86 @@ describe("StyledFooter", () => {
         <StyledFooter {...base} defaultOpen status={<span>All systems normal</span>} />,
       );
       expect(screen.getByText("All systems normal")).toBeInTheDocument();
+    });
+
+    it("shows an uptime badge when given one", () => {
+      render(
+        <StyledFooter {...base} defaultOpen statusBadge={{ src: "/api/status-badge" }} />,
+      );
+      const badge = screen.getByTestId("footer-status-badge");
+      expect(badge).toHaveAttribute("src", "/api/status-badge");
+      // Not decorative: the badge says whether a service is up, so an empty
+      // alt would hide that from a screen reader entirely.
+      expect(badge).toHaveAttribute("alt", "Service status");
+    });
+
+    it("takes the caller's label as the accessible name", () => {
+      render(
+        <StyledFooter
+          {...base}
+          defaultOpen
+          statusBadge={{ src: "/api/status-badge", label: "Optima service status" }}
+        />,
+      );
+      expect(screen.getByTestId("footer-status-badge")).toHaveAttribute(
+        "alt",
+        "Optima service status",
+      );
+    });
+
+    /**
+     * The requirement that made this a prop rather than a hard-coded badge: a
+     * page with no monitor must still render a correct footer. Not a gap, not a
+     * broken image, not an empty box — nothing at all.
+     */
+    it("renders NO badge when there is no monitor", () => {
+      render(<StyledFooter {...base} defaultOpen version={{ build: "1.2.3" }} />);
+      expect(screen.queryByTestId("footer-status-badge")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("footer-status-link")).not.toBeInTheDocument();
+      // The rest of the panel is unaffected — the footer is complete without it.
+      expect(screen.getByTestId("footer-version-build")).toBeInTheDocument();
+    });
+
+    it("links the badge to a status page when given an href", () => {
+      render(
+        <StyledFooter
+          {...base}
+          defaultOpen
+          statusBadge={{ src: "/api/status-badge", href: "https://status.example.com" }}
+        />,
+      );
+      const link = screen.getByTestId("footer-status-link");
+      expect(link).toHaveAttribute("href", "https://status.example.com");
+      // A cross-origin target needs both, or the new page can reach back
+      // through window.opener.
+      expect(link).toHaveAttribute("rel", expect.stringContaining("noopener"));
+      expect(link.querySelector("img")).toBeTruthy();
+    });
+
+    it("does not wrap the badge in a link when there is no href", () => {
+      render(
+        <StyledFooter {...base} defaultOpen statusBadge={{ src: "/api/status-badge" }} />,
+      );
+      expect(screen.queryByTestId("footer-status-link")).not.toBeInTheDocument();
+      expect(screen.getByTestId("footer-status-badge")).toBeInTheDocument();
+    });
+
+    it("hides the badge if the image fails, rather than showing a broken icon", () => {
+      // Cosmetic half only. The browser still logs the failed request, which is
+      // why `src` must be a same-origin route that always answers with an image
+      // — a cross-origin badge withheld two release tags (NEH-387).
+      render(
+        <StyledFooter {...base} defaultOpen statusBadge={{ src: "/api/status-badge" }} />,
+      );
+      fireEvent.error(screen.getByTestId("footer-status-badge"));
+      expect(screen.queryByTestId("footer-status-badge")).not.toBeInTheDocument();
+    });
+
+    it("does not mount the badge while closed", () => {
+      // Same reason as `status`: a badge mounted behind a closed panel would
+      // request on every page view, and every failure is a console error.
+      render(<StyledFooter {...base} statusBadge={{ src: "/api/status-badge" }} />);
+      expect(screen.queryByTestId("footer-status-badge")).not.toBeInTheDocument();
     });
 
     it("does not mount the status while closed", () => {
