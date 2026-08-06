@@ -226,3 +226,28 @@ export type { StyledInputToggleProps } from "./components/StyledInputToggle";
 export { default as StyledInputRadio } from "./components/StyledInputRadio";
 export type { StyledInputRadioProps, RadioItem, RadioVariant } from "./components/StyledInputRadio";
 export { RADIO_VARIANTS } from "./components/StyledInputRadio";
+
+export { default as StyledFieldset } from "./components/StyledFieldset";
+export type { StyledFieldsetProps, FieldsetVariant } from "./components/StyledFieldset";
+export { FIELDSET_VARIANTS } from "./components/StyledFieldset";
+
+// ---------------------------------------------------------------------------
+// Data display
+// ---------------------------------------------------------------------------
+export { default as StyledList } from "./components/StyledList";
+export type {
+  StyledListRootProps,
+  StyledListItemProps,
+  ListVariant,
+} from "./components/StyledList";
+export { LIST_VARIANTS } from "./components/StyledList";
+
+export { default as StyledDefinitionList } from "./components/StyledDefinitionList";
+export type {
+  StyledDefinitionListProps,
+  DlVariant,
+} from "./components/StyledDefinitionList";
+export { DL_VARIANTS } from "./components/StyledDefinitionList";
+
+export { default as StyledSparkLine } from "./components/StyledSparkLine";
+export type { StyledSparkLineProps } from "./components/StyledSparkLine";
