@@ -80,8 +80,19 @@ export const LIST_VARIANTS = [
 
 export type ListVariant = (typeof LIST_VARIANTS)[number];
 
+/**
+ * Props derive from the Panda component, not from `React.HTMLAttributes`, so
+ * style props (`w`, `h`, `mt`, …) are typed rather than merely tolerated.
+ *
+ * The originating version reached this by declaring `[key: string]: unknown`
+ * — which accepted the style props *and* every typo alongside them, and
+ * defeated type checking on the whole component. Narrowing it to
+ * `HTMLAttributes` was the opposite mistake: 9 HopperGuard call sites pass
+ * `w`, `h` or `mt`, and they are legitimate. `ComponentProps<typeof PandaUl>`
+ * is the type that admits exactly the real ones.
+ */
 export type StyledListRootProps = React.PropsWithChildren<
-  React.HTMLAttributes<HTMLUListElement | HTMLOListElement> & {
+  React.ComponentProps<typeof PandaUl> & {
     /**
      * `| undefined` is spelled out throughout this file because the repo runs
      * `exactOptionalPropertyTypes`: without it a caller holding a
@@ -141,7 +152,7 @@ const StyledListRoot = React.forwardRef<
 
 StyledListRoot.displayName = "StyledList.Root";
 
-export type StyledListItemProps = React.LiHTMLAttributes<HTMLLIElement> & {
+export type StyledListItemProps = React.ComponentProps<typeof PandaListItem> & {
   /**
    * Match the `Root`'s variant. Only needed when a row is rendered outside the
    * `Root`'s own subtree — otherwise leave it; rows inherit their surface from
