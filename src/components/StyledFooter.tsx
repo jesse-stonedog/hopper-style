@@ -92,6 +92,24 @@ const Chevron = styled("span", {
   },
 });
 
+/**
+ * Links get their OWN line inside the panel rather than sharing the meta row.
+ *
+ * `width: 100%` is what forces the break: Panel wraps, so a full-width child
+ * necessarily starts a new line. HopperGuard's row is seven-plus links with
+ * separators, and inlining it beside the version chips leaves the two reading
+ * as one run-on sentence.
+ */
+const LinkRow = styled("div", {
+  base: {
+    display: "flex",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: 2,
+    width: "100%",
+  },
+});
+
 const Panel = styled("div", {
   base: {
     display: "flex",
@@ -173,6 +191,19 @@ export interface StyledFooterProps {
    */
   statusBadge?: StyledFooterStatusBadge | undefined;
   /**
+   * A row of links, shown in the panel when open, on its own line.
+   *
+   * **Optional, and two of the three products have none.** HopperGuard carries
+   * Privacy, Terms, its compliance pages and (only when signed in) Release
+   * Notes; rozcards and Optima pass nothing and no empty row is rendered.
+   *
+   * A slot rather than a `{href,label}[]`: HopperGuard interleaves separators,
+   * gates one entry on session state, and builds part of the list from config.
+   * A data-shaped prop would have to grow a predicate and a separator strategy
+   * to express that, and would still be wrong for the next consumer.
+   */
+  links?: React.ReactNode | undefined;
+  /**
    * Anything else for the panel — extra links, a build date, a region.
    *
    * The general escape hatch, kept alongside `statusBadge` rather than replaced
@@ -234,6 +265,7 @@ export function StyledFooter({
   version,
   statusBadge,
   status,
+  links,
   open,
   defaultOpen = false,
   onOpenChange,
@@ -313,7 +345,12 @@ export function StyledFooter({
             type="button"
             onClick={toggle}
             aria-expanded={isOpen}
-            aria-controls={panelId}
+            // Only while the panel EXISTS. It is unmounted when closed
+            // (deliberately — see the panel below), and aria-controls pointing
+            // at an absent id is invalid ARIA that some screen readers announce
+            // oddly. Spread rather than `aria-controls={undefined}` so the
+            // attribute is genuinely absent rather than present-and-empty.
+            {...(isOpen ? { "aria-controls": panelId } : {})}
             data-testid="footer-toggle"
           >
             <Chevron
@@ -345,8 +382,14 @@ export function StyledFooter({
               {`build ${version.build}`}
             </StyledText>
           )}
-          {statusBadge && <StatusBadge {...statusBadge} />}
+          {/* `key` on src: StatusBadge latches `failed` so a broken image does
+              not leave a torn icon in the footer, but that latch must not
+              outlive the URL that failed. Re-keying remounts it, which is the
+              cheapest correct reset — without it a badge that failed once
+              stays hidden after the src is fixed. */}
+          {statusBadge && <StatusBadge key={statusBadge.src} {...statusBadge} />}
           {status}
+          {links && <LinkRow data-testid="footer-links">{links}</LinkRow>}
         </Panel>
       )}
     </StyledBox>

@@ -285,3 +285,75 @@ describe("StyledFooter bar layout (NEH-397)", () => {
     expect(screen.getByTestId("footer-toggle")).toBeTruthy();
   });
 });
+
+describe("StyledFooter links slot and a11y (NEH-397)", () => {
+  it("renders no link row when there are none", () => {
+    // rozcards and Optima pass nothing. An empty row would be a visible gap.
+    render(<StyledFooter copyright="© 2026 RozCards" defaultOpen />);
+    expect(screen.queryByTestId("footer-links")).toBeNull();
+  });
+
+  it("renders the links it is given, on their own line in the panel", () => {
+    render(
+      <StyledFooter
+        copyright="© 2026 HopperGuard"
+        defaultOpen
+        links={
+          <>
+            <a href="/privacy">Privacy</a>
+            <a href="/tos">Terms</a>
+          </>
+        }
+      />,
+    );
+    const row = screen.getByTestId("footer-links");
+    expect(row.textContent).toContain("Privacy");
+    expect(row.textContent).toContain("Terms");
+    // width:100% is what forces the break inside the wrapping panel; without it
+    // the links share the meta row and read as one run-on line.
+    expect(row.className).toContain("w_100%");
+  });
+
+  it("does not mount the links while closed", () => {
+    // Same contract as version and status: nothing in the panel is tabbable or
+    // announced while it is shut.
+    render(<StyledFooter copyright="© 2026" links={<a href="/privacy">Privacy</a>} />);
+    expect(screen.queryByTestId("footer-links")).toBeNull();
+  });
+
+  it("REGRESSION: aria-controls is absent while closed, present when open", () => {
+    // The panel is unmounted when closed, so a standing aria-controls pointed
+    // at an id that does not exist — invalid ARIA.
+    const { rerender } = render(<StyledFooter copyright="© 2026" />);
+    const toggle = screen.getByTestId("footer-toggle");
+    expect(toggle.hasAttribute("aria-controls")).toBe(false);
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+
+    rerender(<StyledFooter copyright="© 2026" open />);
+    const openToggle = screen.getByTestId("footer-toggle");
+    expect(openToggle.getAttribute("aria-expanded")).toBe("true");
+    const controls = openToggle.getAttribute("aria-controls");
+    expect(controls).toBeTruthy();
+    // and it must actually resolve to the panel
+    expect(document.getElementById(controls as string)).toBe(
+      screen.getByTestId("footer-panel"),
+    );
+  });
+
+  it("REGRESSION: a badge that failed once is retried when src changes", () => {
+    // StatusBadge latches `failed` so a broken image leaves no torn icon. That
+    // latch must not outlive the URL that failed, or a fixed badge stays
+    // invisible until a full remount.
+    const { rerender } = render(
+      <StyledFooter copyright="© 2026" defaultOpen statusBadge={{ src: "/a.svg" }} />,
+    );
+    fireEvent.error(screen.getByTestId("footer-status-badge"));
+    expect(screen.queryByTestId("footer-status-badge")).toBeNull();
+
+    rerender(
+      <StyledFooter copyright="© 2026" defaultOpen statusBadge={{ src: "/b.svg" }} />,
+    );
+    const retried = screen.getByTestId("footer-status-badge");
+    expect(retried.getAttribute("src")).toBe("/b.svg");
+  });
+});
