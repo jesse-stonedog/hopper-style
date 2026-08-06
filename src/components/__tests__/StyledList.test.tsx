@@ -168,6 +168,41 @@ describe("StyledList", () => {
     });
   });
 
+  describe("style props", () => {
+    // These are TYPE assertions as much as runtime ones: `tsc` covers the test
+    // files, so if the props type stops admitting `w`/`h`/`mt` this file fails
+    // to compile. That is the actual guard — 9 HopperGuard call sites pass
+    // them, and the originating component only accepted them by way of a
+    // `[key: string]: unknown` index signature that disabled type checking on
+    // every other prop at the same time.
+    it("accepts Panda style props on the root", () => {
+      render(
+        <StyledList.Root w="100%" h="100%" mt="4">
+          <StyledList.Item>One</StyledList.Item>
+        </StyledList.Root>,
+      );
+      expect(screen.getByRole("list")).toBeInTheDocument();
+    });
+
+    it("accepts Panda style props on a row", () => {
+      render(
+        <StyledList.Root>
+          <StyledList.Item px="6">One</StyledList.Item>
+        </StyledList.Root>,
+      );
+      expect(screen.getByText("One")).toBeInTheDocument();
+    });
+
+    it("still forwards plain DOM attributes", () => {
+      render(
+        <StyledList.Root aria-label="Vitals" data-testid="list">
+          <StyledList.Item>One</StyledList.Item>
+        </StyledList.Root>,
+      );
+      expect(screen.getByTestId("list")).toHaveAttribute("aria-label", "Vitals");
+    });
+  });
+
   describe("list semantics", () => {
     it("keeps an explicit role when markers are suppressed", () => {
       // Safari drops list semantics from any <ul> with `list-style: none`,
