@@ -170,10 +170,21 @@ path keeps working.
 | RozCards | `~/src/stonedogcode/card-sorter/rozcards` | private | `standard` | **not yet a consumer** — Tailwind v4 today (NEH-255) |
 
 A change that suits one must not regress the others, which is what the
-default-pinning tests are guarding. Note the old names: this package's docs used
-to call the Optima repos `maximus-compliance` / `maximus-cloud-saas`, and the
-npm scope inside them is still `@maximus/*` (NEH-238, sequenced behind trademark
-clearance). The *repos* are `optima-*`.
+default-pinning tests are guarding.
+
+**The Optima npm scopes, since this file had them wrong.** The OSS packages
+publish as **`@optima-compliance/*`** and the hosted repo's private packages are
+**`@optima-cloud/*`**. Both `maximus` and a bare `@optima` are dead: this file
+used to say the scope was still `@maximus/*`, and the issue asking for that to
+be corrected said to write `@optima/*` — which is *also* wrong, because an npm
+scope must be your username or an org you belong to and `@optima` was neither.
+The publish fails with a **404, not a 403**, since npm will not leak whether an
+org exists, so it reads like a missing package while auth is perfectly fine.
+
+That is three names for one scope, and the reason to record it here rather than
+just fix the string: this file is loaded as instructions, so a stale line is
+worse than an absent one — it is confidently wrong at exactly the moment
+somebody is trusting it.
 
 ## How a consumer wires this up
 
