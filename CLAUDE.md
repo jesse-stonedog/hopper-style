@@ -235,6 +235,26 @@ Because Panda extracts styles statically at the consumer's build. A pre-bundled
 therefore never wrote CSS for. Shipping source is the standard arrangement for a
 Panda component library, and it is why steps 2 and 3 exist at all.
 
+**Source, but not the tests (NEH-370).** `files` negates `__tests__/`,
+`*.ct.tsx` and `*.harness.tsx` — 57 of 130 entries, and 0.6.0 was the last
+version to carry them. Nothing exported resolves into any of them, so they were
+only ever weight a consumer's Panda run had to be told to skip, and **an
+`exclude` that is subtly wrong is silent** — the same failure class as an
+`include` glob matching nothing. Fewer shipped files is fewer globs that can be
+quietly wrong.
+
+Two things follow for anyone changing `files`:
+
+- **Assert the listing, never the array.** `src/__tests__/published-package.test.ts`
+  runs `npm pack --dry-run` and checks what npm actually resolved. A test
+  reading `files` back would agree with a negation npm ignored, and the file
+  listing is the only place the real contents ever appear.
+- **A consumer's `exclude` for these paths is only dead if it points at
+  `node_modules`.** Every submodule consumer — HopperGuard, optima-filings,
+  RozCards — globs `packages/stonedog-style/src/**`, which is a full checkout
+  and still has the tests. Those excludes stay. Only optima-cloud-saas installs
+  from npm.
+
 ## Adding or changing a component
 
 1. **Check it belongs here.** The test is: *would a completely different product

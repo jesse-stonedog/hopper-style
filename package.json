@@ -1,6 +1,6 @@
 {
   "name": "stonedog-style",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "A Panda CSS design system: a themeable Panda preset plus the React components built on it.",
   "license": "Apache-2.0",
   "author": "StoneDogCode L.L.C.",
@@ -16,8 +16,12 @@
     "./preset": "./src/preset/index.ts",
     "./package.json": "./package.json"
   },
+  "//files": "The package ships SOURCE, so `src` has to go out whole — but only the part a consumer imports. Tests, Playwright component tests and their harnesses were 57 of 130 entries and never resolvable from any export, so every one of them was a file a consumer's Panda run had to be told to skip. `src/__tests__/published-package.test.ts` asserts this listing rather than this array: npm's own resolution of these negations is the only thing that decides what ships.",
   "files": [
     "src",
+    "!src/**/__tests__/**",
+    "!src/**/*.ct.tsx",
+    "!src/**/*.harness.tsx",
     "LICENSE",
     "NOTICE",
     "README.md"
