@@ -258,7 +258,27 @@ export function StyledFooter({
   return (
     <StyledBox as="footer" width="100%" p={2} data-testid={testId}>
       <Bar>
-        <StyledBox p={0}>
+        {/*
+          `flex: 1 1 auto` / `width: auto` are LOAD-BEARING, not tidying.
+
+          boxRecipe's base is `width: 100%` — right for the many places
+          StyledBox is a layout container, wrong for exactly this one. As a flex
+          item it claimed the whole line, and because the Bar wraps, the actions
+          and toggle were pushed to a SECOND ROW, where the Bar's
+          `space-between` no longer governs them and they bunched left. That is
+          the reported defect: on Optima the "Details" button sat under the
+          copyright with the action beside it, at a width where everything fits
+          on one row.
+
+          `minWidth: 0` lets a long copyright shrink instead of forcing the wrap
+          back — a flex item otherwise refuses to go below its content width,
+          and the second row returns at narrower viewports.
+        */}
+        <StyledBox
+          p={0}
+          data-testid="footer-identity"
+          style={{ flex: "1 1 auto", width: "auto", minWidth: 0 }}
+        >
           <StyledText size="lg" display="block" data-testid="footer-copyright">
             {copyright}
           </StyledText>
@@ -274,7 +294,21 @@ export function StyledFooter({
           )}
         </StyledBox>
 
-        <Bar style={{ width: "auto", flex: "0 0 auto" }}>
+        {/*
+          `marginInlineStart: auto` pins this group right even when the
+          copyright is short — `space-between` alone only does that while the
+          left column is the sole other child, which stops being true the
+          moment anything else is added.
+
+          ACTIONS COME FIRST, TOGGLE LAST. The expander belongs at the far
+          right: it is the control that changes the footer's shape, and a
+          reader scanning right-to-left for "how do I see more" should find it
+          at the edge rather than between the product's own buttons. Previously
+          the toggle rendered before `actions`, so it could never be the
+          rightmost element however the row was laid out.
+        */}
+        <Bar style={{ width: "auto", flex: "0 0 auto", marginInlineStart: "auto" }}>
+          {actions}
           <ToggleButton
             type="button"
             onClick={toggle}
@@ -294,7 +328,6 @@ export function StyledFooter({
               {isOpen ? hideDetailsLabel : showDetailsLabel}
             </StyledText>
           </ToggleButton>
-          {actions}
         </Bar>
       </Bar>
 
