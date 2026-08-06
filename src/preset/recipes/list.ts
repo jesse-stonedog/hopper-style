@@ -19,6 +19,14 @@ export const listRecipe = defineSlotRecipe({
       solid: {
         root: {
           bg: "boxBgPrimary",
+          // Paired with the surface, per TEXT_BACKGROUND_PAIRS. Without it the
+          // rows inherit whatever colour the page has — and on a dark
+          // `boxBgPrimary` that is dark-on-dark, unreadable. This recipe was
+          // the only one setting a background without its partner; `dlRecipe`
+          // beside it has always paired them. Found by screenshotting the
+          // component rather than by any test (NEH-167, cycle 9), which is the
+          // same way NEH-278 was found.
+          color: "textPrimary",
           borderWidth: "1px",
           // Same omission as the item slot below: no `border-style`, so the
           // outer border of a solid or outline list computed to 0px and never
@@ -137,6 +145,11 @@ export const listRecipe = defineSlotRecipe({
       matte: {
         root: {
           bgGradient: "linear(to-b, gray.800, gray.900)",
+          // A deliberate literal, matching `box.ts` and `input-bool.ts`: this
+          // variant's surface is a FIXED dark gradient rather than a token, so
+          // themed text renders dark-on-dark in a light theme. The literal is
+          // correct until the surface and the text move onto tokens together.
+          color: "white",
           borderColor: "gray.700",
           borderWidth: "1px",
           borderRadius: "lg",

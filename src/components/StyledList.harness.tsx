@@ -1,5 +1,5 @@
 import React from "react";
-import StyledList from "./StyledList";
+import StyledList, { type ListVariant } from "./StyledList";
 import StyledSparkLine from "./StyledSparkLine";
 
 /**
@@ -10,13 +10,19 @@ import StyledSparkLine from "./StyledSparkLine";
  * evaluated in the browser bundle, which never sees the test module's scope.
  */
 
-/** Three rows, optionally gapped. */
-export function ListHarness({ gap }: { gap?: string | undefined }) {
+/** Three rows, optionally gapped, optionally in a named variant. */
+export function ListHarness({
+  gap,
+  variant,
+}: {
+  gap?: string | undefined;
+  variant?: ListVariant | undefined;
+}) {
   return (
-    <StyledList.Root gap={gap}>
-      <StyledList.Item>Blood pressure</StyledList.Item>
-      <StyledList.Item>Weight</StyledList.Item>
-      <StyledList.Item>Temperature</StyledList.Item>
+    <StyledList.Root gap={gap} variant={variant}>
+      <StyledList.Item variant={variant}>Blood pressure</StyledList.Item>
+      <StyledList.Item variant={variant}>Weight</StyledList.Item>
+      <StyledList.Item variant={variant}>Temperature</StyledList.Item>
     </StyledList.Root>
   );
 }
