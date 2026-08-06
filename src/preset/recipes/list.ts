@@ -20,11 +20,22 @@ export const listRecipe = defineSlotRecipe({
         root: {
           bg: "boxBgPrimary",
           borderWidth: "1px",
+          // Same omission as the item slot below: no `border-style`, so the
+          // outer border of a solid or outline list computed to 0px and never
+          // painted either.
+          borderStyle: "solid",
           borderColor: "borderBgPrimary",
           borderRadius: "lg",
         },
         item: {
           borderBottomWidth: "1px",
+          // `border-style` defaults to `none`, and a border with no style
+          // computes to a width of ZERO however many pixels you ask for — so
+          // these row separators had never rendered (NEH-167, cycle 9). The
+          // aurora/glass/matte variants below use the `borderBottom`
+          // shorthand, which carries the style, which is why only these three
+          // were dead.
+          borderBottomStyle: "solid",
           borderColor: "borderBgSecondary",
           _last: {
             borderBottom: "none",
@@ -34,11 +45,22 @@ export const listRecipe = defineSlotRecipe({
       outline: {
         root: {
           borderWidth: "1px",
+          // Same omission as the item slot below: no `border-style`, so the
+          // outer border of a solid or outline list computed to 0px and never
+          // painted either.
+          borderStyle: "solid",
           borderColor: "borderBgPrimary",
           borderRadius: "lg",
         },
         item: {
           borderBottomWidth: "1px",
+          // `border-style` defaults to `none`, and a border with no style
+          // computes to a width of ZERO however many pixels you ask for — so
+          // these row separators had never rendered (NEH-167, cycle 9). The
+          // aurora/glass/matte variants below use the `borderBottom`
+          // shorthand, which carries the style, which is why only these three
+          // were dead.
+          borderBottomStyle: "solid",
           borderColor: "borderBgSecondary",
           _last: {
             borderBottom: "none",
@@ -48,6 +70,13 @@ export const listRecipe = defineSlotRecipe({
       lines: {
         item: {
           borderBottomWidth: "1px",
+          // `border-style` defaults to `none`, and a border with no style
+          // computes to a width of ZERO however many pixels you ask for — so
+          // these row separators had never rendered (NEH-167, cycle 9). The
+          // aurora/glass/matte variants below use the `borderBottom`
+          // shorthand, which carries the style, which is why only these three
+          // were dead.
+          borderBottomStyle: "solid",
           borderColor: "borderBgSecondary",
           _last: {
             borderBottom: "none",

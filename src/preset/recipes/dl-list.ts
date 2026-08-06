@@ -18,10 +18,16 @@ export const dlRecipe = defineRecipe({
     "& > dt:not(:first-child), & > dd:not(:first-child)": {
       marginTop: "0.5rem",
     },
+    // The separator was `& > li`, which a `<dl>` never contains — the rule was
+    // valid, and matched nothing, so the row separators had never once
+    // rendered (NEH-167, cycle 9). `dd` puts the line after each completed
+    // pair; `dt` would have drawn it between a term and its own definition.
+    //
+    // Merged into the existing `dd` rule rather than added beside it: a second
+    // key with the same selector is a duplicate object key, and the later one
+    // replaces the earlier wholesale — which would have dropped this margin.
     "& > dd:not(:last-child)": {
       marginBottom: "0.5rem",
-    },
-    "& > li:not(:last-child)": {
       borderBottom: "1px solid",
       borderColor: "borderBgPrimary",
     },
@@ -41,7 +47,7 @@ export const dlRecipe = defineRecipe({
       outline: {
         borderColor: "borderBgSecondary",
         color: "textPrimary",
-        "& > li:not(:last-child)": {
+        "& > dd:not(:last-child)": {
           borderBottom: "1px solid",
           borderColor: "borderBgSecondary",
         },
@@ -56,7 +62,7 @@ export const dlRecipe = defineRecipe({
         backgroundImage: `linear-gradient(to right, {colors.boxBgAccent}, {colors.boxBgSecondary})`,
         color: "textPrimary",
         borderColor: "transparent",
-        "& > li:not(:last-child)": {
+        "& > dd:not(:last-child)": {
           borderBottom: "1px solid",
           borderColor: "borderBgPrimary",
         },
@@ -66,7 +72,7 @@ export const dlRecipe = defineRecipe({
         backgroundColor: "rgba(255, 255, 255, 0.1)",
         border: "1px solid rgba(255, 255, 255, 0.2)",
         color: "textPrimary",
-        "& > li:not(:last-child)": {
+        "& > dd:not(:last-child)": {
           borderBottom: "1px solid rgba(255, 255, 255, 0.2)",
         },
       },
@@ -76,7 +82,7 @@ export const dlRecipe = defineRecipe({
         bg: "boxBgSecondary",
         color: "textSecondary",
         borderColor: "borderBgPrimary",
-        "& > li:not(:last-child)": {
+        "& > dd:not(:last-child)": {
           borderBottom: "1px solid",
           borderColor: "borderBgPrimary",
         },
@@ -84,7 +90,7 @@ export const dlRecipe = defineRecipe({
       none: {
         border: "none",
         backgroundColor: "inherit",
-        "& > li:not(:last-child)": {
+        "& > dd:not(:last-child)": {
           borderBottom: "1px solid",
           borderColor: "borderBgPrimary",
         },
@@ -94,7 +100,7 @@ export const dlRecipe = defineRecipe({
         p: "0",
         m: "0",
         backgroundColor: "inherit",
-        "& > li:not(:last-child)": {
+        "& > dd:not(:last-child)": {
           borderBottom: "none",
         },
       },
