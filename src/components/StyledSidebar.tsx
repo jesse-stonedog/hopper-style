@@ -6,6 +6,7 @@ import StyledBox from "./StyledBox";
 import StyledText from "./StyledText";
 import StyledVStack from "./StyledVStack";
 import StyledHStack from "./StyledHStack";
+import StyledFlex from "./StyledFlex";
 import StyledScrollbar from "./StyledScrollbar";
 import StyledTooltip from "./StyledTooltip";
 
@@ -300,6 +301,17 @@ const StyledSidebar: React.FC<StyledSidebarProps> = ({
               // "Token compliance").
               borderColor={isSelected ? "borderBgAccent" : "transparent"}
               background={isSelected ? "boxBgAccent" : "transparent"}
+              // Icon-only: centre the glyph and hold the target size.
+              //
+              // `minWidth: 0` on the base is what lets a long label wrap
+              // instead of overflowing — correct when there IS a label, and
+              // exactly wrong without one, because the button then shrinks to
+              // the glyph and the tap target quietly falls under the floor.
+              // The horizontal padding goes too: at a 72px rail, 12px either
+              // side is a fifth of the width spent on nothing.
+              minWidth={iconOnly ? CONTROL_MIN_TARGET : 0}
+              justifyContent={iconOnly ? "center" : "flex-start"}
+              px={iconOnly ? "1" : "3"}
             >
               {item.icon !== undefined && item.icon !== null && <ItemIcon>{item.icon}</ItemIcon>}
               {/* The labels are dropped entirely only under the §20a opt-in.
@@ -398,7 +410,12 @@ const StyledSidebar: React.FC<StyledSidebarProps> = ({
       data-testid="styled-sidebar"
       borderRightWidth="1px"
       borderColor="borderBgPrimary"
-      p={2}
+      // Tighter when icon-only. The arithmetic is the whole reason this exists:
+      // a 48px target + a ~15px scroll gutter + 2x8px of padding needs 79px,
+      // which does not fit the 72px rail the opt-in is for. At 2x4px it needs
+      // 71px and does. A host still has to give the rail enough width — this
+      // just stops the component spending a fifth of it on its own margins.
+      p={iconOnly ? 1 : 2}
       // `height: 100%` + `minHeight: 0` is what makes scroll mode work at all.
       // StyledScrollbar is `flex: 1; min-height: 0; overflow: auto`, which can
       // only produce a scrollbar inside a column whose height is constrained.
@@ -409,8 +426,29 @@ const StyledSidebar: React.FC<StyledSidebarProps> = ({
       noWrap
     >
       <StyledVStack gap={2} alignItems="stretch" height="100%" minHeight="0">
-        <StyledHStack justifyContent="space-between" alignItems="center">
-          {heading && <StyledText fontWeight="bold">{heading}</StyledText>}
+        {/*
+          Stacked when icon-only, side-by-side otherwise.
+
+          Reported from production: at a 72px rail the heading and a 48px
+          control cannot share a row, so the control was laid out past the
+          rail's right edge and clipped — it measured 118px in a 72px rail.
+          `space-between` does not shrink a child below its min-width; it
+          overflows, silently and off-screen.
+
+          Only under the icon-only opt-in, because a 280px rail has room for the
+          row and stacking there would cost vertical space for nothing.
+        */}
+        <StyledFlex
+          flexDirection={iconOnly ? "column" : "row"}
+          justifyContent={iconOnly ? "flex-start" : "space-between"}
+          alignItems={iconOnly ? "stretch" : "center"}
+          gap={iconOnly ? 1 : 0}
+        >
+          {heading && (
+            <StyledText fontWeight="bold" size={iconOnly ? "sm" : undefined}>
+              {heading}
+            </StyledText>
+          )}
           {/* Gating on `onCollapsedChange` alone would leave a host that only
               set `defaultCollapsed` with a permanently collapsed rail and no way
               out of it — see `canCollapse` for why it is not simply
@@ -438,7 +476,7 @@ const StyledSidebar: React.FC<StyledSidebarProps> = ({
               {isCollapsed ? "»" : "«"}
             </CollapseButton>
           )}
-        </StyledHStack>
+        </StyledFlex>
 
         {items.length === 0 ? (
           // A live region: someone filtering with a screen reader has to learn
@@ -477,7 +515,36 @@ const StyledSidebar: React.FC<StyledSidebarProps> = ({
             )}
           </>
         ) : (
-          <StyledScrollbar data-testid="sidebar-scroll">{list}</StyledScrollbar>
+          <StyledScrollbar
+            data-testid="sidebar-scroll"
+            // Reserve the scrollbar's width even before it appears, so content
+            // is never laid out underneath it and then clipped.
+            //
+            // This is the reported production defect. `StyledScrollbar` is
+            // `scrollbar-width: thick` with 0.5rem of padding, which is not
+            // enough clearance on a narrow rail — a desktop scrollbar is
+            // ~15-17px. `stable` takes the gutter out of the content box up
+            // front, so the layout is the same whether or not the list happens
+            // to overflow. Without it a rail is correct until one more tool is
+            // added, which is the worst kind of correct.
+            //
+            // NOT reproducible in this repo's own component tests: headless
+            // Chromium uses OVERLAY scrollbars, which occupy zero width, so the
+            // clipping cannot occur here at all. The guard asserts the reserved
+            // gutter rather than the symptom.
+            //
+            // INLINE STYLE, not a Panda prop, and both halves of that matter.
+            // Panda has no `scrollbar-gutter` utility, so the prop emitted a
+            // class (`scr-bar-g_stable`) with no rule behind it — this
+            // package's oldest defect class, and it computed as `auto`. Adding
+            // a utility to THIS package's Panda config would not help either:
+            // every consumer generates its own CSS from its own config, so the
+            // rule would exist here and nowhere a consumer could use it. An
+            // inline style is the only form that reaches all three products.
+            style={{ scrollbarGutter: "stable" }}
+          >
+            {list}
+          </StyledScrollbar>
         )}
       </StyledVStack>
     </StyledBox>

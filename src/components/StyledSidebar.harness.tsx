@@ -1,5 +1,6 @@
 import React from "react";
 import StyledSidebar, { type SidebarItem } from "./StyledSidebar";
+import { densityCustomProperties, type DensityStep } from "../config/density";
 
 /**
  * Mount targets for `StyledSidebar.ct.tsx`.
@@ -151,5 +152,60 @@ export function SidebarIconOnly() {
         iconOnlyWhenCollapsed
       />
     </Rail>
+  );
+}
+
+/**
+ * The reported production case: an icon-only rail with enough tools to scroll.
+ *
+ * The distinction from `SidebarIconOnly` is the whole bug. Four tools do not
+ * overflow, so no scrollbar exists and nothing is clipped — which is why the
+ * first round of §20a tests passed while production was visibly broken.
+ * HopperGuard shows ~24 tools. A scrollbar appears, takes width out of the
+ * content box, and the icons underneath it are cut off.
+ */
+export function SidebarIconOnlyScrolling() {
+  const [selectedId, setSelectedId] = React.useState("tool-0");
+  return (
+    <Rail width="72px" height="400px">
+      <StyledSidebar
+        items={MANY}
+        selectedId={selectedId}
+        onSelect={setSelectedId}
+        heading="Care Tools"
+        defaultCollapsed
+        iconOnlyWhenCollapsed
+      />
+    </Rail>
+  );
+}
+
+/**
+ * The icon-only rail at a chosen density rung, with enough tools to scroll.
+ *
+ * Density is written as the two custom properties the recipes fold into their
+ * own padding, which is the seam a host uses — so this exercises the real
+ * mechanism rather than a prop that only this test knows about.
+ *
+ * Parameterised because the report was "on each density", and the rungs differ
+ * by 12px of padding between `tight` and `airy`. A rail that fits at one rung
+ * and not another is the failure worth catching, and only one of the five would
+ * be exercised by a fixed harness.
+ */
+export function SidebarIconOnlyAtDensity({ step }: { step: DensityStep }) {
+  const [selectedId, setSelectedId] = React.useState("tool-0");
+  return (
+    <div style={{ ...densityCustomProperties(step), display: "flex" } as React.CSSProperties}>
+      <Rail width="72px" height="400px">
+        <StyledSidebar
+          items={MANY}
+          selectedId={selectedId}
+          onSelect={setSelectedId}
+          heading="Care Tools"
+          defaultCollapsed
+          iconOnlyWhenCollapsed
+        />
+      </Rail>
+    </div>
   );
 }

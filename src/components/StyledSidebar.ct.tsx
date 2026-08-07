@@ -5,6 +5,8 @@ import {
   SidebarPaging,
   SidebarLongLabels,
   SidebarIconOnly,
+  SidebarIconOnlyScrolling,
+  SidebarIconOnlyAtDensity,
 } from "./StyledSidebar.harness";
 
 /**
@@ -260,5 +262,119 @@ test.describe("icon-only collapse (§20a)", () => {
     // Uncontrolled, so the component owns this — a host that only wanted
     // "start collapsed" must not end up with a rail it cannot open.
     await expect(component.getByText("Calendar")).toBeVisible();
+  });
+});
+
+/**
+ * Clipping in a narrow rail — reported from production on 0.853.0.
+ *
+ * "The expand button and each icon are cut off due to the scrollbar."
+ *
+ * The mechanism: `StyledScrollbar` is `scrollbarWidth: thick` with `0.5rem` of
+ * padding-right. A thick scrollbar is ~15-17px, so at a 72px rail the usable
+ * width after the sidebar's own padding and the scroll gutter is less than the
+ * 48px target the items are supposed to keep — and the item button is
+ * `minWidth: 0`, so it shrinks rather than refusing.
+ *
+ * These measure against the SCROLL CONTAINER's client box rather than the
+ * viewport. An element can sit fully inside the window and still be clipped by
+ * the scrollbar of its own parent, which is exactly what was reported and what
+ * a viewport-based assertion would miss.
+ */
+test.describe("narrow rail does not clip its controls", () => {
+  test("no tool icon is cut off by the scroll gutter", async ({ mount }) => {
+    // The SCROLLING harness, deliberately. Four tools do not overflow, so no
+    // scrollbar exists and nothing is clipped — which is exactly why the first
+    // round of §20a tests passed while production was visibly broken.
+    const component = await mount(<SidebarIconOnlyScrolling />);
+    const scroll = component.getByTestId("sidebar-scroll");
+    const clip = (await scroll.boundingBox())!;
+    // The scrollbar lives inside the border box, so the content a reader can
+    // actually see ends at clientWidth, not at the box's right edge.
+    const clientWidth = await scroll.evaluate((el) => el.clientWidth);
+    const visibleRight = clip.x + clientWidth;
+
+    const rows = component.getByTestId(/^sidebar-item-/);
+    expect(await rows.count()).toBeGreaterThan(4);
+
+    // The first few, which are the ones on screen. Rows below the fold have a
+    // box too, but clipping is a horizontal question and the top rows answer it.
+    for (let i = 0; i < 3; i++) {
+      const box = (await rows.nth(i).boundingBox())!;
+      expect(
+        box.x + box.width,
+        `tool row ${i} is clipped by the scroll gutter`,
+      ).toBeLessThanOrEqual(visibleRight);
+    }
+  });
+
+  test("the collapse control is fully inside the rail", async ({ mount }) => {
+    const component = await mount(<SidebarIconOnly />);
+    const rail = (await component.boundingBox())!;
+    const toggle = (await component.getByTestId("sidebar-collapse").boundingBox())!;
+
+    expect(toggle.x, "the collapse control starts left of the rail").toBeGreaterThanOrEqual(
+      rail.x - 0.5,
+    );
+    expect(
+      toggle.x + toggle.width,
+      "the collapse control overflows the rail",
+    ).toBeLessThanOrEqual(rail.x + rail.width + 0.5);
+  });
+});
+
+/**
+ * "It needs more padding to ensure on each density the icons and expand button
+ * are fully visible."
+ *
+ * Every rung, because the report named all of them and the ladder spans 12px of
+ * padding between `tight` and `airy`. A rail that fits at `standard` and
+ * overflows at `airy` is the failure worth catching, and a fixed-density
+ * harness would exercise exactly one of the five.
+ */
+const DENSITY_RUNGS = ["tight", "compact", "standard", "spacious", "airy"] as const;
+
+test.describe("icon-only rail fits at every density", () => {
+  for (const step of DENSITY_RUNGS) {
+    test(`nothing overflows the rail at ${step}`, async ({ mount }) => {
+      const component = await mount(<SidebarIconOnlyAtDensity step={step} />);
+      const rail = (await component.getByTestId("rail").boundingBox())!;
+      const right = rail.x + rail.width + 0.5;
+
+      const toggle = (await component.getByTestId("sidebar-collapse").boundingBox())!;
+      expect(
+        toggle.x + toggle.width,
+        `the collapse control overflows the rail at ${step}`,
+      ).toBeLessThanOrEqual(right);
+
+      const rows = component.getByTestId(/^sidebar-item-/);
+      for (let i = 0; i < 3; i++) {
+        const box = (await rows.nth(i).boundingBox())!;
+        expect(
+          box.x + box.width,
+          `tool row ${i} overflows the rail at ${step}`,
+        ).toBeLessThanOrEqual(right);
+        // And it must still be reachable — shrinking to fit is not fitting.
+        expect(
+          box.width,
+          `tool row ${i} fell under the control floor at ${step}`,
+        ).toBeGreaterThanOrEqual(CONTROL_FLOOR);
+      }
+    });
+  }
+
+  test("reserves the scrollbar gutter rather than laying out underneath it", async ({
+    mount,
+  }) => {
+    // The mechanism, asserted because the SYMPTOM is not reproducible here:
+    // headless Chromium uses overlay scrollbars, which occupy zero width, so
+    // the clipping a desktop reader sees cannot happen in this browser at all.
+    // Asserting `scrollbar-gutter` is what makes the guard mean something on
+    // the machines where the bug was reported.
+    const component = await mount(<SidebarIconOnlyAtDensity step="standard" />);
+    const gutter = await component
+      .getByTestId("sidebar-scroll")
+      .evaluate((el) => getComputedStyle(el).scrollbarGutter);
+    expect(gutter).toContain("stable");
   });
 });
