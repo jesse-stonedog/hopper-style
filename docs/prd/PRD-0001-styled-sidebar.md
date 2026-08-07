@@ -88,6 +88,23 @@ All three get the same component. Nothing here should be optimised for the third
 20. **Collapsed still shows each tool's name**, at reduced prominence: icon plus name, with descriptions suppressed. It does **not** become an icon-only rail. An icon-only rail is the conventional answer and it is rejected here: it re-introduces exactly the "guess what the glyph means" problem that Requirement 1 exists to remove.
 21. The collapsed/expanded state is announced, and the control's accessible name reflects what it will do next.
 
+**20a. A host may opt into an icon-only rail — and only a host may.**
+
+Requirement 20 stands as the default and is enforced by test. `iconOnlyWhenCollapsed` is the documented exception, added 2026-08-07 at the owner's direction for HopperGuard, which wants the horizontal space back.
+
+The exception is **opt-in and off by default**, because §20's reasoning has not stopped being true — it has been *overruled for one product*. The other two consumers must not inherit that decision silently, which is the same rule the package applies to every other default (see CLAUDE.md, "Changing a default is silent"). For the same reason, `defaultCollapsed` is read as absent-vs-supplied rather than defaulted, so a host that says nothing keeps the sidebar it already has, collapse control included or not.
+
+Two mitigations make it defensible rather than merely possible, and both are enforced:
+
+- **The name is never lost.** An icon-only item carries the tool's name as the button's `aria-label`, so a screen reader announces "Calendar, button" exactly as before. What the rail removes is the *visible* name, not the accessible one.
+- **The name and description are recoverable** from a tooltip on the item, carrying both.
+
+**The flag alone recovers no space.** The sidebar fills the width its container gives it and does not narrow itself — layout stays the host's. A host that sets `iconOnlyWhenCollapsed` and leaves its rail at the old width has given up the visible names for nothing, silently. Narrowing the container when collapsed is the host's half of the bargain. Found by the component tier, which measured the rail at an unchanged 260px on the first run; the jest tier had happily confirmed the labels were gone and could not have caught it.
+
+**The residual gap is touch, and it is real.** `StyledTooltip` has no touch trigger — hover and focus only (CLAUDE.md, "Known gap"). On a tablet, tapping an icon-only item *activates* it rather than explaining it, so the hover mode reveals nothing. `collapsedTooltipTrigger="click"` renders an explicit control and is the only mode a sighted touch reader can use; a host shipping this to touch devices should pass it. HopperGuard drives it from its existing `accessibility.clickForTooltips` setting, which is the same question already asked in that product's own words.
+
+This does **not** relax §6 or §25: nothing opens on hover *by default*, and the item's longer `help` panel is still click-only regardless of this setting. The hover mode here is a deliberate host choice about one tooltip, not a change to the component's stance on hover.
+
 ### F. Empty and edge states
 
 22. When `items` is empty the component renders an **`emptyState`** supplied by the host, inside a live region so a screen-reader user learns that a filter matched nothing.

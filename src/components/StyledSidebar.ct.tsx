@@ -4,6 +4,7 @@ import {
   SidebarScrolling,
   SidebarPaging,
   SidebarLongLabels,
+  SidebarIconOnly,
 } from "./StyledSidebar.harness";
 
 /**
@@ -195,5 +196,69 @@ test.describe("keyboard", () => {
     });
     expect(outline.style).not.toBe("none");
     expect(outline.width).toBeGreaterThan(0);
+  });
+});
+
+/**
+ * The §20a icon-only rail.
+ *
+ * jsdom said the labels are gone and the aria-label is present, which is the
+ * wiring. It cannot say whether the rail actually got narrower — its whole
+ * point — nor whether an item stripped of its label still presents a target a
+ * shaky hand can hit. Both are only answerable here.
+ */
+test.describe("icon-only collapse (§20a)", () => {
+  test("survives a rail too narrow for labels — the component does NOT narrow itself", async ({
+    mount,
+  }) => {
+    // The finding this test exists to pin. `iconOnlyWhenCollapsed` recovers NO
+    // horizontal space on its own: the sidebar fills whatever width the host
+    // gives it, so a host that flips the flag and leaves its container at 260px
+    // has given up the visible names for nothing — silently, with no build
+    // error. Narrowing the container is the host's half.
+    //
+    // So what the component owes is weaker and testable: it must survive being
+    // narrowed. Nothing inside may force a minimum width that makes a 72px rail
+    // overflow.
+    // `component` IS the rail — it is the harness's root element, so looking
+    // for the rail's testid *inside* it finds nothing and times out.
+    const component = await mount(<SidebarIconOnly />);
+    const rail = (await component.boundingBox())!;
+    const sidebar = (await component.getByTestId("styled-sidebar").boundingBox())!;
+
+    expect(rail.width).toBeLessThanOrEqual(80);
+    expect(
+      sidebar.width,
+      "the sidebar overflowed a rail narrow enough to be worth collapsing for",
+    ).toBeLessThanOrEqual(rail.width + 1);
+  });
+
+  test("keeps a hittable target after losing the label", async ({ mount }) => {
+    const component = await mount(<SidebarIconOnly />);
+    const rows = component.getByTestId(/^sidebar-item-/);
+    const count = await rows.count();
+    expect(count).toBe(4);
+
+    for (let i = 0; i < count; i++) {
+      const box = (await rows.nth(i).boundingBox())!;
+      // The row floor still applies: the label was what gave these rows their
+      // width, so this is exactly where a target quietly collapses to the size
+      // of a glyph.
+      expect(box.height, `row ${i} fell under the row floor`).toBeGreaterThanOrEqual(ITEM_FLOOR);
+      expect(box.width, `row ${i} fell under the control floor`).toBeGreaterThanOrEqual(
+        CONTROL_FLOOR,
+      );
+    }
+  });
+
+  test("expanding brings the names back", async ({ mount }) => {
+    const component = await mount(<SidebarIconOnly />);
+    await expect(component.getByText("Calendar")).toBeHidden();
+
+    await component.getByTestId("sidebar-collapse").click();
+
+    // Uncontrolled, so the component owns this — a host that only wanted
+    // "start collapsed" must not end up with a rail it cannot open.
+    await expect(component.getByText("Calendar")).toBeVisible();
   });
 });

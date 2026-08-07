@@ -25,6 +25,15 @@ import StyledTooltip from "./StyledTooltip";
  * Every item is an icon *and* a name; there is no icon-only rendering, not
  * even collapsed. Help opens on click, never hover. Nothing anywhere in here
  * changes state on hover.
+ *
+ * **`iconOnlyWhenCollapsed` is the one documented exception** (PRD §20a), and
+ * it is opt-in for exactly that reason. A host that sets it accepts an
+ * icon-only rail — the thing §20 rejects — in exchange for the horizontal
+ * space. The mitigations that make it defensible are not optional and are
+ * enforced below: the button keeps the tool's name as its accessible name, so
+ * nothing is lost to assistive technology, and the name and description are
+ * reachable as a tooltip. Read `collapsedTooltipTrigger` before assuming a
+ * touch reader can see either.
  */
 
 /**
@@ -62,8 +71,52 @@ export interface StyledSidebarProps {
   overflow?: "scroll" | "paging";
   /** Items per page when `overflow="paging"`. */
   itemsPerPage?: number;
+  /** Controlled. Omit to let the component own the state via `defaultCollapsed`. */
   collapsed?: boolean;
+  /**
+   * Initial collapsed state when uncontrolled. Default `false`.
+   *
+   * Separate from `collapsed` so a host can say "start collapsed" without
+   * taking on the state itself. Supplying `collapsed` wins.
+   */
+  defaultCollapsed?: boolean;
   onCollapsedChange?: (next: boolean) => void;
+  /**
+   * Render collapsed items as an icon-only rail, with the name and description
+   * moved into a tooltip. Default `false`.
+   *
+   * **This is the PRD §20a exception and it is off by default deliberately.**
+   * §20 rejects an icon-only rail because it reinstates the guess-the-glyph
+   * problem the component exists to remove. A host opting in is trading that
+   * away for horizontal space, which is a decision only a host can make — the
+   * package will not make it for them, and the two other consumers of this
+   * component must not inherit it silently.
+   *
+   * The name is *never* actually lost: collapsed buttons carry it as their
+   * accessible name, so a screen reader announces the tool regardless.
+   *
+   * **On its own this recovers NO horizontal space, and that surprises people.**
+   * The sidebar fills whatever width its container gives it; it does not narrow
+   * itself, because layout is the host's to own. A host that sets this flag and
+   * leaves its rail at its old width has traded away the visible names for
+   * nothing — with no build error and nothing to notice. **Narrow the container
+   * when collapsed; that is the other half of the bargain.** A component test
+   * pins the part this component does owe: it must survive being narrowed.
+   */
+  iconOnlyWhenCollapsed?: boolean;
+  /**
+   * How the collapsed item's name/description tooltip opens. Default `"hover"`.
+   *
+   * `"click"` renders an explicit control instead, and is what a host should
+   * pass when its reader has asked for help-on-press — HopperGuard drives this
+   * from its `accessibility.clickForTooltips` setting.
+   *
+   * **It is also the only mode a touch reader can use.** `StyledTooltip` has no
+   * touch trigger (hover and focus only), so on a tablet the hover mode reveals
+   * nothing: tapping an icon-only item activates it rather than explaining it.
+   * A host shipping `iconOnlyWhenCollapsed` to touch devices wants `"click"`.
+   */
+  collapsedTooltipTrigger?: "hover" | "click";
   /** Rendered when `items` is empty — e.g. "No tools match that search." */
   emptyState?: React.ReactNode;
   /** e.g. "TOOLS". */
@@ -160,13 +213,44 @@ const StyledSidebar: React.FC<StyledSidebarProps> = ({
   onSelect,
   overflow = "scroll",
   itemsPerPage = 8,
-  collapsed = false,
+  collapsed,
+  defaultCollapsed,
   onCollapsedChange,
+  iconOnlyWhenCollapsed = false,
+  collapsedTooltipTrigger = "hover",
   emptyState,
   heading,
   "aria-label": ariaLabel = "Tools",
 }) => {
   const [page, setPage] = useState(0);
+
+  // Controlled when `collapsed` is supplied, uncontrolled otherwise. The
+  // internal state moves either way — see the toggle below.
+  const [uncontrolledCollapsed, setUncontrolledCollapsed] = useState(defaultCollapsed ?? false);
+  const isCollapsed = collapsed !== undefined ? collapsed : uncontrolledCollapsed;
+
+  // Whether this sidebar can collapse AT ALL, which is a different question
+  // from whether it currently is.
+  //
+  // `defaultCollapsed` is read undefined-vs-absent rather than defaulted to
+  // `false`, because those two mean different things here: a host that says
+  // nothing must keep the sidebar it already has. Treating "uncontrolled" as
+  // "collapsible" would grow a collapse control on optima-filings and
+  // optima-cloud-saas, neither of which asked for one and neither of which
+  // would see a build error — the silent-default hazard CLAUDE.md describes.
+  const canCollapse = onCollapsedChange !== undefined || defaultCollapsed !== undefined;
+
+  const toggleCollapsed = () => {
+    const next = !isCollapsed;
+    if (collapsed === undefined) setUncontrolledCollapsed(next);
+    onCollapsedChange?.(next);
+  };
+
+  // The rail is icon-only only when BOTH are true. Keeping this one derived
+  // value rather than testing the pair at each site is what stops a later edit
+  // dropping the icon while leaving the label suppressed, which would render an
+  // item with nothing in it at all.
+  const iconOnly = isCollapsed && iconOnlyWhenCollapsed;
 
   // Paging resets whenever the item set changes. Without this a host that
   // narrows `items` (a search) leaves the reader on a page that no longer
@@ -191,14 +275,21 @@ const StyledSidebar: React.FC<StyledSidebarProps> = ({
     <StyledVStack gap={1} alignItems="stretch" role="list" data-testid="sidebar-items">
       {visible.map((item) => {
         const isSelected = item.id === selectedId;
-        return (
-          <StyledHStack key={item.id} gap={1} alignItems="center" role="listitem">
-            <ItemButton
+
+        const button = (
+          <ItemButton
               type="button"
               onClick={() => onSelect(item.id)}
               // Selection is announced, not just drawn.
               aria-current={isSelected ? "true" : undefined}
+              // The name survives the icon-only rail. Without this the button's
+              // accessible name is whatever the host's icon happens to expose —
+              // usually nothing — so a screen reader announces "button" and the
+              // rail becomes unusable rather than merely terse. This is the
+              // mitigation that makes PRD §20a defensible; it is not optional.
+              aria-label={iconOnly ? item.label : undefined}
               data-testid={`sidebar-item-${item.id}`}
+              data-icon-only={iconOnly ? "true" : undefined}
               data-selected={isSelected ? "true" : undefined}
               // Tokens, as ternaries on Panda style props — never an inline
               // `style={{ background: "var(--colors-…)" }}`. A literal custom
@@ -211,33 +302,77 @@ const StyledSidebar: React.FC<StyledSidebarProps> = ({
               background={isSelected ? "boxBgAccent" : "transparent"}
             >
               {item.icon !== undefined && item.icon !== null && <ItemIcon>{item.icon}</ItemIcon>}
-              <ItemLabels>
-                {/* The name is always rendered — collapsed only drops the
-                    description. An icon-only rail would reinstate exactly the
-                    guess-the-glyph problem this component exists to remove. */}
-                <StyledText
-                  // Weight, not just colour. Selection must survive greyscale,
-                  // a high-contrast theme and colour blindness (PRD §C10) —
-                  // and `aria-current` carries it to assistive technology.
-                  fontWeight={isSelected ? "bold" : "normal"}
-                  color={isSelected ? "textAccent" : "textPrimary"}
-                >
-                  {item.label}
-                </StyledText>
-                {!collapsed && item.description && (
-                  // `size`, not `fontSize`: StyledText writes its resolved size
-                  // into an inline `style`, which beats any class a `fontSize`
-                  // prop would generate. The prop looked right and did nothing.
-                  <StyledText size="sm" color={isSelected ? "textAccent" : "textSecondary"}>
-                    {item.description}
+              {/* The labels are dropped entirely only under the §20a opt-in.
+                  Plain `collapsed` still renders the name and drops just the
+                  description, which is what §20 asks for and remains the
+                  default for every host that says nothing. */}
+              {!iconOnly && (
+                <ItemLabels>
+                  <StyledText
+                    // Weight, not just colour. Selection must survive greyscale,
+                    // a high-contrast theme and colour blindness (PRD §C10) —
+                    // and `aria-current` carries it to assistive technology.
+                    fontWeight={isSelected ? "bold" : "normal"}
+                    color={isSelected ? "textAccent" : "textPrimary"}
+                  >
+                    {item.label}
                   </StyledText>
-                )}
-              </ItemLabels>
+                  {!isCollapsed && item.description && (
+                    // `size`, not `fontSize`: StyledText writes its resolved size
+                    // into an inline `style`, which beats any class a `fontSize`
+                    // prop would generate. The prop looked right and did nothing.
+                    <StyledText size="sm" color={isSelected ? "textAccent" : "textSecondary"}>
+                      {item.description}
+                    </StyledText>
+                  )}
+                </ItemLabels>
+              )}
             </ItemButton>
+        );
+
+        return (
+          <StyledHStack key={item.id} gap={1} alignItems="center" role="listitem">
+            {iconOnly ? (
+              // The name and description are what the rail just took away, so
+              // this tooltip is not decoration — it is the only place a sighted
+              // reader can recover them without expanding.
+              //
+              // `tooltip` carries both, and the description is omitted rather
+              // than rendered empty when the host did not supply one: a panel
+              // containing a name the button already announces is worse than no
+              // panel, because it teaches the reader that pressing help wastes
+              // their time.
+              <StyledTooltip
+                tooltip={
+                  item.description ? (
+                    <>
+                      <StyledText fontWeight="bold">{item.label}</StyledText>
+                      <StyledText size="sm">{item.description}</StyledText>
+                    </>
+                  ) : (
+                    <StyledText fontWeight="bold">{item.label}</StyledText>
+                  )
+                }
+                trigger={collapsedTooltipTrigger}
+                helpLabel={`What does ${item.label} do?`}
+                // `sidebar-tooltip-`, NOT `sidebar-item-tooltip-`: the latter
+                // prefix-matches the `/^sidebar-item-/` selector the component
+                // tests already use to enumerate rows, silently doubling the
+                // count. A testid that shadows another is a trap for whoever
+                // writes the next query.
+                data-testid={`sidebar-tooltip-${item.id}`}
+              >
+                {button}
+              </StyledTooltip>
+            ) : (
+              button
+            )}
 
             {item.help && (
               // trigger="click" — a drifting pointer must not spawn this, nor
-              // dismiss one being read.
+              // dismiss one being read. Unconditionally click even when the
+              // name/description tooltip above is on hover: this one is the
+              // longer explanation, and it is the one a reader dwells on.
               <HelpSlot>
                 <StyledTooltip tooltip={item.help} trigger="click" helpLabel={`What does ${item.label} do?`}>
                   <span />
@@ -276,16 +411,31 @@ const StyledSidebar: React.FC<StyledSidebarProps> = ({
       <StyledVStack gap={2} alignItems="stretch" height="100%" minHeight="0">
         <StyledHStack justifyContent="space-between" alignItems="center">
           {heading && <StyledText fontWeight="bold">{heading}</StyledText>}
-          {onCollapsedChange && (
+          {/* Gating on `onCollapsedChange` alone would leave a host that only
+              set `defaultCollapsed` with a permanently collapsed rail and no way
+              out of it — see `canCollapse` for why it is not simply
+              "uncontrolled". */}
+          {canCollapse && (
             <CollapseButton
               type="button"
-              onClick={() => onCollapsedChange(!collapsed)}
-              aria-expanded={!collapsed}
+              onClick={toggleCollapsed}
+              aria-expanded={!isCollapsed}
               // The name says what pressing it will do, not what state it is in.
-              aria-label={collapsed ? "Show tool descriptions" : "Hide tool descriptions"}
+              // Under the icon-only opt-in it will reveal the names themselves,
+              // not merely the descriptions, so it says so — a reader who cannot
+              // identify the glyphs is precisely the one reaching for this.
+              aria-label={
+                iconOnlyWhenCollapsed
+                  ? isCollapsed
+                    ? "Show tool names"
+                    : "Hide tool names"
+                  : isCollapsed
+                    ? "Show tool descriptions"
+                    : "Hide tool descriptions"
+              }
               data-testid="sidebar-collapse"
             >
-              {collapsed ? "»" : "«"}
+              {isCollapsed ? "»" : "«"}
             </CollapseButton>
           )}
         </StyledHStack>
