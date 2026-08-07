@@ -488,4 +488,17 @@ as hover, moves `aria-describedby` onto whatever actually receives focus, and
 declines to invent a name when an ancestor already provides one. All three are
 there because the naive version was shipped first and was wrong.
 
-**Known gap:** the tooltip has no touch trigger — hover and focus only.
+**Touch is handled (0.9.0).** A hover trigger on a device that cannot hover is
+not degraded, it is *unreachable* — there is no hover event, and tapping the
+control activates it rather than explaining it. `StyledTooltip` therefore asks
+`(hover: none)` and falls back to its explicit press-to-open control there.
+
+`(hover: none)`, not `(pointer: coarse)`: they are different questions and only
+the first is ours. A stylus is coarse and hovers perfectly well; what matters is
+whether the primary input can hover at all.
+
+It defaults to **assuming hover** on the server and the first client render, so
+a touch device gains the control on mount rather than every desktop rendering
+one and then removing it — a flicker on the majority case to fix the minority
+one. The blast radius is exactly the cases that were broken: click mode is
+unaffected, and a hover-capable device is unaffected.

@@ -249,3 +249,93 @@ describe("StyledTooltip — click mode", () => {
     expect(screen.getByRole("button", { name: "What does Calendar do?" })).toBeInTheDocument();
   });
 });
+
+/**
+ * Touch: a hover tooltip on a device that cannot hover.
+ *
+ * This was a documented gap for as long as the component existed, and it
+ * stopped being cosmetic when an icon-only navigation rail shipped: on a tablet
+ * those icons had no visible name *and* no way to ask for one.
+ *
+ * jsdom has no `matchMedia`, so these stub it. That is honest rather than
+ * convenient — the capability genuinely comes from the platform, and the thing
+ * worth pinning is what the component does with each answer.
+ */
+describe("StyledTooltip — devices that cannot hover", () => {
+  const setHoverCapability = (canHover: boolean) => {
+    Object.defineProperty(window, "matchMedia", {
+      writable: true,
+      configurable: true,
+      value: (query: string) => ({
+        // `(hover: none)` matches when the device CANNOT hover.
+        matches: query === "(hover: none)" ? !canHover : false,
+        media: query,
+        addEventListener: jest.fn(),
+        removeEventListener: jest.fn(),
+        addListener: jest.fn(),
+        removeListener: jest.fn(),
+        onchange: null,
+        dispatchEvent: jest.fn(),
+      }),
+    });
+  };
+
+  afterEach(() => {
+    // Leaving a stub behind would silently decide every later test in the file.
+    Reflect.deleteProperty(window as unknown as Record<string, unknown>, "matchMedia");
+  });
+
+  it("offers a reachable control instead of an unreachable hover", () => {
+    setHoverCapability(false);
+    render(
+      <StyledTooltip tooltip="What this does" helpLabel="What does Calendar do?">
+        <button type="button">Calendar</button>
+      </StyledTooltip>,
+    );
+    // Without this the tooltip is rendered, correct, and impossible to open:
+    // there is no hover event, and tapping the child activates the child.
+    expect(screen.getByRole("button", { name: "What does Calendar do?" })).toBeInTheDocument();
+  });
+
+  it("leaves a hover-capable device alone", () => {
+    setHoverCapability(true);
+    render(
+      <StyledTooltip tooltip="What this does" helpLabel="What does Calendar do?">
+        <button type="button">Calendar</button>
+      </StyledTooltip>,
+    );
+    // The blast radius is exactly "cases that were broken". A mouse user must
+    // not grow a control they never had.
+    expect(
+      screen.queryByRole("button", { name: "What does Calendar do?" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("does not spawn on a synthetic pointer event when the device cannot hover", () => {
+    setHoverCapability(false);
+    render(
+      <StyledTooltip tooltip="What this does">
+        <button type="button">Calendar</button>
+      </StyledTooltip>,
+    );
+    // Touch browsers emit compatibility mouse events after a tap. In click mode
+    // nothing responds to a drifting or synthetic pointer, which is the whole
+    // point of that mode.
+    fireEvent.mouseEnter(screen.getByText("Calendar"));
+    expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+  });
+
+  it("assumes hover when the platform cannot be asked", () => {
+    // jsdom without the stub, and the server. Defaulting the other way would
+    // make every desktop render a control and then remove it — a flicker on the
+    // majority case, to fix the minority one.
+    render(
+      <StyledTooltip tooltip="What this does" helpLabel="What does Calendar do?">
+        <button type="button">Calendar</button>
+      </StyledTooltip>,
+    );
+    expect(
+      screen.queryByRole("button", { name: "What does Calendar do?" }),
+    ).not.toBeInTheDocument();
+  });
+});
