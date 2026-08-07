@@ -56,8 +56,10 @@ describe("StyledSidebar — items", () => {
     rerender(<StyledSidebar items={TOOLS} onSelect={jest.fn()} collapsed />);
 
     expect(screen.queryByText("Events & appointments")).not.toBeInTheDocument();
-    // The name survives collapsing. An icon-only rail is exactly what this
-    // component refuses to become.
+    // The name survives collapsing. An icon-only rail is what this component
+    // refuses to become BY DEFAULT — the §20a opt-in below is the only way to
+    // get one, and this assertion is what stops it becoming the default by
+    // accident in a later edit.
     expect(screen.getByText("Calendar")).toBeInTheDocument();
   });
 
@@ -278,5 +280,151 @@ describe("StyledSidebar — token compliance", () => {
     const description = screen.getByText("Events & appointments");
     expect(description.className).toContain("c_textSecondary");
     expect(description.className).not.toContain("fg.muted");
+  });
+});
+
+/**
+ * The icon-only rail — PRD §20a.
+ *
+ * §20 rejects an icon-only rail outright. §20a is the documented exception a
+ * host may opt into, and these tests pin the two things that make it
+ * defensible rather than merely possible: the name is never actually lost, and
+ * turning it on is a deliberate act.
+ *
+ * The most valuable assertion here is the one about the DEFAULT. Two other
+ * products consume this component and neither asked for this; the failure that
+ * matters is not "the opt-in is broken" but "the opt-in became the default and
+ * nobody noticed".
+ */
+describe("StyledSidebar — icon-only collapse (§20a opt-in)", () => {
+  const ICONS: SidebarItem[] = TOOLS.map((t) => ({
+    ...t,
+    icon: <span data-testid={`icon-${t.id}`}>◆</span>,
+  }));
+
+  it("is OFF unless asked for, even when collapsed", () => {
+    render(<StyledSidebar items={ICONS} onSelect={jest.fn()} collapsed />);
+    // Collapsed alone still shows names. This is §20 holding.
+    expect(screen.getByText("Calendar")).toBeInTheDocument();
+  });
+
+  it("drops the visible names only when collapsed AND opted in", () => {
+    const { rerender } = render(
+      <StyledSidebar items={ICONS} onSelect={jest.fn()} iconOnlyWhenCollapsed />,
+    );
+    // Opted in but expanded — names still render. Both conditions are needed.
+    expect(screen.getByText("Calendar")).toBeInTheDocument();
+
+    rerender(
+      <StyledSidebar items={ICONS} onSelect={jest.fn()} collapsed iconOnlyWhenCollapsed />,
+    );
+    expect(screen.queryByText("Calendar")).not.toBeInTheDocument();
+    // The icon is what is left. An item rendering neither would be an empty
+    // button — the failure mode of getting this ternary wrong.
+    expect(screen.getByTestId("icon-calendar")).toBeInTheDocument();
+  });
+
+  it("keeps the tool's name as the button's accessible name", () => {
+    render(
+      <StyledSidebar items={ICONS} onSelect={jest.fn()} collapsed iconOnlyWhenCollapsed />,
+    );
+    // The mitigation the whole exception rests on. Without it a screen reader
+    // announces "button" and the rail is unusable rather than merely terse.
+    expect(screen.getByRole("button", { name: "Calendar" })).toBeInTheDocument();
+  });
+
+  it("does not duplicate the name when the label is visible", () => {
+    // A name in BOTH aria-label and the text content is announced twice. The
+    // aria-label exists only to replace a label that is not being rendered.
+    render(<StyledSidebar items={ICONS} onSelect={jest.fn()} iconOnlyWhenCollapsed />);
+    expect(screen.getByTestId("sidebar-item-calendar")).not.toHaveAttribute("aria-label");
+  });
+
+  it("still reports the chosen tool when it is icon-only", () => {
+    const onSelect = jest.fn();
+    render(
+      <StyledSidebar items={ICONS} onSelect={onSelect} collapsed iconOnlyWhenCollapsed />,
+    );
+    fireEvent.click(screen.getByTestId("sidebar-item-notes"));
+    expect(onSelect).toHaveBeenCalledWith("notes");
+  });
+
+  it("offers help-on-press when the host asks for it", () => {
+    // The click trigger renders StyledTooltip's own control, which is the only
+    // mode a touch reader can reach — the tooltip has no touch trigger, so on a
+    // tablet the hover mode reveals nothing at all.
+    render(
+      <StyledSidebar
+        items={ICONS}
+        onSelect={jest.fn()}
+        collapsed
+        iconOnlyWhenCollapsed
+        collapsedTooltipTrigger="click"
+      />,
+    );
+    expect(
+      screen.getAllByRole("button", { name: "What does Calendar do?" }).length,
+    ).toBeGreaterThan(0);
+  });
+
+  it("says it will show NAMES, not descriptions, when icon-only", () => {
+    // A reader who cannot identify the glyphs is exactly the one reaching for
+    // this control, and "Show tool descriptions" would understate what it does.
+    render(
+      <StyledSidebar
+        items={ICONS}
+        onSelect={jest.fn()}
+        collapsed
+        iconOnlyWhenCollapsed
+        onCollapsedChange={jest.fn()}
+      />,
+    );
+    expect(screen.getByTestId("sidebar-collapse")).toHaveAttribute(
+      "aria-label",
+      "Show tool names",
+    );
+  });
+});
+
+describe("StyledSidebar — uncontrolled collapse", () => {
+  it("starts collapsed when asked, and can be expanded without a host handler", () => {
+    // A host that only wants "start collapsed" should not have to own the
+    // state. Gating the control on onCollapsedChange would have left such a
+    // host with a permanently collapsed rail and no way out.
+    render(<StyledSidebar items={TOOLS} onSelect={jest.fn()} defaultCollapsed />);
+    expect(screen.queryByText("Events & appointments")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId("sidebar-collapse"));
+    expect(screen.getByText("Events & appointments")).toBeInTheDocument();
+  });
+
+  it("lets a controlled host win", () => {
+    render(
+      <StyledSidebar
+        items={TOOLS}
+        onSelect={jest.fn()}
+        collapsed={false}
+        defaultCollapsed
+        onCollapsedChange={jest.fn()}
+      />,
+    );
+    // `collapsed` is supplied, so `defaultCollapsed` is ignored entirely.
+    expect(screen.getByText("Events & appointments")).toBeInTheDocument();
+  });
+
+  it("tells a controlled host about the press rather than moving on its own", () => {
+    const onCollapsedChange = jest.fn();
+    render(
+      <StyledSidebar
+        items={TOOLS}
+        onSelect={jest.fn()}
+        collapsed={false}
+        onCollapsedChange={onCollapsedChange}
+      />,
+    );
+    fireEvent.click(screen.getByTestId("sidebar-collapse"));
+    expect(onCollapsedChange).toHaveBeenCalledWith(true);
+    // Still expanded: the host owns the value and has not changed it yet.
+    expect(screen.getByText("Events & appointments")).toBeInTheDocument();
   });
 });

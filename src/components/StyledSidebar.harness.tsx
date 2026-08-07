@@ -38,11 +38,19 @@ const MANY: SidebarItem[] = Array.from({ length: 30 }, (_, i) => ({
 }));
 
 /** A sidebar in a narrow rail, which is how a host actually places one. */
-function Rail({ children, height }: { children: React.ReactNode; height?: string }) {
+function Rail({
+  children,
+  height,
+  width = "260px",
+}: {
+  children: React.ReactNode;
+  height?: string;
+  width?: string;
+}) {
   return (
     <div
       data-testid="rail"
-      style={{ width: "260px", display: "flex", flexDirection: "column", ...(height ? { height } : {}) }}
+      style={{ width, display: "flex", flexDirection: "column", ...(height ? { height } : {}) }}
     >
       {children}
     </div>
@@ -114,6 +122,33 @@ export function SidebarLongLabels() {
         selectedId="long"
         onSelect={() => {}}
         heading="TOOLS"
+      />
+    </Rail>
+  );
+}
+
+/**
+ * The §20a icon-only rail, uncontrolled and starting collapsed.
+ *
+ * Its own harness rather than a prop on `SidebarBasic`, because the interesting
+ * assertions are about the rail's *width* and about the tap target surviving
+ * the loss of the label — neither of which the shared fixture is arranged for.
+ */
+export function SidebarIconOnly() {
+  const [selectedId, setSelectedId] = React.useState("calendar");
+  // 72px, because the COMPONENT does not narrow itself — it fills whatever the
+  // host gives it. `iconOnlyWhenCollapsed` alone recovers no horizontal space
+  // at all; narrowing the container is the host's half of the bargain, and this
+  // harness exists partly to make that obvious to the next reader.
+  return (
+    <Rail width="72px">
+      <StyledSidebar
+        items={TOOLS}
+        selectedId={selectedId}
+        onSelect={setSelectedId}
+        heading="TOOLS"
+        defaultCollapsed
+        iconOnlyWhenCollapsed
       />
     </Rail>
   );
