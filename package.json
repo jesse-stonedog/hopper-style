@@ -1,5 +1,5 @@
 {
-  "name": "stonedog-style",
+  "name": "@stonedogcode/style",
   "version": "0.9.0",
   "description": "A Panda CSS design system: a themeable Panda preset plus the React components built on it.",
   "license": "Apache-2.0",
@@ -8,9 +8,13 @@
     "type": "git",
     "url": "git+https://github.com/stonedog-code/stonedog-style.git"
   },
+  "//publishConfig": "A SCOPED package defaults to access: restricted. Publishing one without this succeeds, prints nothing unusual, and then 404s for every consumer — which reads as a missing package rather than as a private one. It was not needed while the name was unscoped (those default to public), so it is new as of NEH-482 and it is the single thing most likely to be forgotten in a scope migration.",
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
   "sideEffects": false,
-  "//exports": "This package ships TypeScript SOURCE, not a bundled dist/. Panda CSS extracts styles by statically parsing source files, so a consumer's `panda codegen` must be able to read our .tsx. A pre-bundled dist would emit class names Panda never generated a stylesheet for. Consumers transpile us (Next.js: `transpilePackages: ['stonedog-style']`) and add our src to their panda `include` globs. See CLAUDE.md.",
+  "//exports": "This package ships TypeScript SOURCE, not a bundled dist/. Panda CSS extracts styles by statically parsing source files, so a consumer's `panda codegen` must be able to read our .tsx. A pre-bundled dist would emit class names Panda never generated a stylesheet for. Consumers transpile us (Next.js: `transpilePackages: ['@stonedogcode/style']`) and add our src to their panda `include` globs. See CLAUDE.md.",
   "exports": {
     ".": "./src/index.ts",
     "./preset": "./src/preset/index.ts",

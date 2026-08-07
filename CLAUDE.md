@@ -1,4 +1,4 @@
-# stonedog-style — a portable Panda CSS design system
+# @stonedogcode/style — a portable Panda CSS design system
 
 **Repo tier.** Machine-wide conventions (branching, PR rules, the Linear
 protocol, Node/nvm) live in `~/.claude/CLAUDE.md` and apply here as written.
@@ -11,9 +11,18 @@ data, or anything under a licence that is not compatible with Apache-2.0 — see
 
 ## Published on npm
 
-`npm install stonedog-style` — **0.1.0, published 2026-08-03** under the npm
-account `stonedogcode`. Until then the only way to consume it was a git
-submodule, and every consumer still does that today.
+`npm install @stonedogcode/style` — under the npm account `stonedogcode`. Before
+it was published the only way to consume it was a git submodule, and most
+consumers still do that today.
+
+**The name is scoped as of NEH-482.** It shipped unscoped as `stonedog-style`
+through `0.8.1`; that name stays on the registry, deprecated, pointing at the
+scoped one. **Do not un-scope it again** — `@stonedogcode/auth` and
+`@stonedogcode/howto` were briefly renamed the other way on 2026-08-07 and
+reverted the same day, and all five shared packages now scope.
+
+Consuming the scoped name means the Panda `include` glob moves with it, and
+that failure is silent — see the upgrade note in the README.
 
 **Prefer the published package for a consumer that only uses this library.**
 Keep a submodule only while co-developing it alongside an app in the same stream
@@ -36,8 +45,8 @@ different companies and licensed differently. It is two things in one package:
 
 | Entry point | What it is | Who imports it |
 |---|---|---|
-| `stonedog-style/preset` | A **Panda CSS preset** — colour tokens, breakpoints, and 22 recipes | the consumer's `panda.config.ts`, at build time in Node |
-| `stonedog-style` | The **React components** built on those recipes | application code |
+| `@stonedogcode/style/preset` | A **Panda CSS preset** — colour tokens, breakpoints, and 22 recipes | the consumer's `panda.config.ts`, at build time in Node |
+| `@stonedogcode/style` | The **React components** built on those recipes | application code |
 
 They are separate entry points on purpose: the config runs in Node during the
 build, and dragging the whole component tree (and React with it) into that
@@ -49,7 +58,7 @@ should behave.
 
 ### Renamed from `hopper-style` — migration in progress (NEH-251)
 
-The package is `stonedog-style`. Every `hopper*` public symbol still exists as a
+The package is `@stonedogcode/style`. Every `hopper*` public symbol still exists as a
 **deprecated alias** re-exported alongside the new name:
 
 | Old | New |
@@ -183,7 +192,7 @@ Four steps. Steps 2 and 3 are the ones that get missed.
 
 ```ts
 import { defineConfig } from "@pandacss/dev";
-import { stonedogStylePreset } from "stonedog-style/preset";
+import { stonedogStylePreset } from "@stonedogcode/style/preset";
 
 export default defineConfig({
   // Listing `presets` REPLACES Panda's defaults — it does not add to them.
@@ -197,7 +206,7 @@ export default defineConfig({
   ],
   include: [
     "./src/**/*.{ts,tsx}",
-    "./node_modules/stonedog-style/src/**/*.tsx",  // ← step 2
+    "./node_modules/@stonedogcode/style/src/**/*.tsx",  // ← step 2
   ],
   outdir: "styled-system",
   jsxFramework: "react",
@@ -209,13 +218,13 @@ statically parsing source files. A package it never parses contributes no CSS,
 and its components render with class names that have no rules behind them.
 
 The glob must point wherever the package **actually lives**, which differs by
-how it was installed — `./node_modules/stonedog-style/src/**/*.tsx` from npm,
+how it was installed — `./node_modules/@stonedogcode/style/src/**/*.tsx` from npm,
 `./packages/stonedog-style/src/**/*.tsx` as a submodule. Moving a consumer from
 one to the other means moving this line, and forgetting is silent: no build
 error, no console warning, just unstyled components.
 
 **3. Transpile the package.** It ships TypeScript source, not a bundle. In
-Next.js: `transpilePackages: ["stonedog-style"]`.
+Next.js: `transpilePackages: ["@stonedogcode/style"]`.
 
 **4. Define the custom properties and mount the provider:**
 

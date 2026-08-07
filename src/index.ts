@@ -1,5 +1,5 @@
 /**
- * stonedog-style — public API.
+ * @stonedogcode/style — public API.
  *
  * Components are exported both as named exports and, individually, as default
  * exports from their own module. Prefer the named export; the default exports
@@ -9,7 +9,7 @@
  * The Panda preset is NOT re-exported here. It is imported by the consumer's
  * `panda.config.ts`, which runs in Node at build time, and pulling the whole
  * component tree (and React with it) into that context is a needless cost —
- * hence the separate `stonedog-style/preset` entry point.
+ * hence the separate `@stonedogcode/style/preset` entry point.
  */
 
 // ---------------------------------------------------------------------------

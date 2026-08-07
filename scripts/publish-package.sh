@@ -2,9 +2,9 @@
 # Copyright (C) 2026 StoneDogCode L.L.C.
 # SPDX-License-Identifier: Apache-2.0
 #
-# Publish stonedog-style to npm, end to end.
+# Publish @stonedogcode/style to npm, end to end.
 #
-#   npm run publish:stonedog-style
+#   npm run publish:@stonedogcode/style
 #
 # Run it from a terminal, interactively. npm prompts for the 2FA one-time
 # password itself (account `stonedogcode`) and the browser login flow needs a
@@ -26,7 +26,7 @@
 #
 # ## The trap that is specific to THIS package
 #
-# stonedog-style ships **TypeScript source**, not a bundle — Panda extracts
+# @stonedogcode/style ships **TypeScript source**, not a bundle — Panda extracts
 # styles by statically parsing source at the consumer's build, so a pre-built
 # `dist/` would emit class names the consumer's `cssgen` never saw. That means
 # optima's "the build did not run, so the tarball is empty" failure cannot
@@ -53,7 +53,7 @@
 # them has to know how it works.
 set -euo pipefail
 
-PACKAGE_NAME="stonedog-style"
+PACKAGE_NAME="@stonedogcode/style"
 # Sanity floor for the tarball. Well under the real count (116) so ordinary
 # growth does not trip it, far above what a `files`-misconfigured package would
 # produce (3: package.json, README, LICENSE).
@@ -169,8 +169,12 @@ echo "  ($FILE_COUNT files total)"
 # ---------------------------------------------------------------------------
 # 6. Publish. npm prompts for the OTP here.
 #
-# `--access public` is explicit: this package has no `publishConfig`, and being
-# wrong about it is not recoverable on that version number.
+# `--access public` is explicit, and now belt-and-braces: the name is SCOPED as
+# of NEH-482, and a scoped package defaults to access: restricted. Publishing
+# one privately succeeds, prints nothing unusual, and then 404s for every
+# consumer — indistinguishable from a package that was never published. So the
+# flag is here AND `publishConfig.access` is in package.json; being wrong about
+# it is not recoverable on that version number.
 # ---------------------------------------------------------------------------
 say "Publishing $PACKAGE_NAME@$VERSION — npm will ask for your 2FA code"
 npm publish --access public

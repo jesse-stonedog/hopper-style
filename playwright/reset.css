@@ -1,7 +1,7 @@
 /*
  * The minimal reset a host must supply.
  *
- * stonedog-style sets `preflight: false` — it does not impose a reset on its
+ * @stonedogcode/style sets `preflight: false` — it does not impose a reset on its
  * consumers — so the host owns this. That makes it an UNDOCUMENTED ASSUMPTION
  * unless it is written down, which is what this file and the README section are
  * for.

@@ -132,7 +132,7 @@ const staticCssAlignment = [
 ];
 
 /**
- * The stonedog-style Panda preset: colour tokens, breakpoints, keyframes, and
+ * The @stonedogcode/style Panda preset: colour tokens, breakpoints, keyframes, and
  * the 22 recipes the component library is built on.
  *
  * Deliberately does NOT set `globalCss`, `preflight`, `include`, or `outdir` —
@@ -143,7 +143,7 @@ export function stonedogStylePreset(options: StonedogStylePresetOptions = {}) {
   const { cssVarPrefix = DEFAULT_CSS_VAR_PREFIX } = options;
 
   return definePreset({
-    name: "stonedog-style",
+    name: "@stonedogcode/style",
     theme: {
       extend: {
         /**
@@ -223,7 +223,7 @@ export { recipes as stonedogStyleRecipes };
 /* ------------------------------------------------------------------------- *
  * Deprecated `hopper*` aliases — NEH-251.
  *
- * The package renamed hopper-style → stonedog-style. These re-exports exist so
+ * The package renamed hopper-style → @stonedogcode/style. These re-exports exist so
  * each consumer can bump its submodule pointer on its own schedule instead of
  * every repo having to move in one lockstep sweep, which is what would make an
  * ordered set of PRs impossible.
