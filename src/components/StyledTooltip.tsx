@@ -7,6 +7,7 @@ import { styled } from "styled-system/jsx";
 import StyledText from "./StyledText";
 import type { AllowedVariant } from "../config/types";
 import { tooltipRecipe } from "styled-system/recipes";
+import { useCanHover } from "../config/can-hover";
 import { useResolvedVariant } from "../config/style-config";
 
 const TooltipTrigger = styled("div", {
@@ -132,7 +133,18 @@ const StyledTooltip: React.FC<StyledTooltipProps> = ({
   const triggerRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const helpRef = useRef<HTMLButtonElement>(null);
-  const isClick = trigger === "click";
+  /**
+   * A hover trigger on a device that cannot hover is not a worse experience —
+   * it is an unreachable one. There is no hover event, and tapping the control
+   * activates it rather than explaining it, so the help is rendered, correct
+   * and impossible to see.
+   *
+   * So `hover` becomes `click` there, which renders the explicit control the
+   * click path already has. This only ever changes cases that were broken:
+   * `click` is unaffected, and a device that can hover is unaffected.
+   */
+  const canHover = useCanHover();
+  const isClick = trigger === "click" || !canHover;
 
   // The child may be any component (StyledIconButton, a link, a bare span), so
   // whether it is focusable can only be known from the rendered DOM — React

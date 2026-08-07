@@ -180,6 +180,10 @@ export { default as StyledSpinner } from "./components/StyledSpinner";
 export type { StyledSpinnerProps } from "./components/StyledSpinner";
 
 export { default as StyledTooltip } from "./components/StyledTooltip";
+// Exported so a host can make the same decision for its own controls. A product
+// that renders its own hover-revealed affordance has the identical problem, and
+// re-deriving "can this device hover" per app is how two answers appear.
+export { useCanHover } from "./config/can-hover";
 export type { StyledTooltipProps } from "./components/StyledTooltip";
 
 // ---------------------------------------------------------------------------
