@@ -103,7 +103,7 @@ describe("StyledInputBool", () => {
     });
 
     it("keeps ghost, which the recipe defines but no user can select app-wide", () => {
-      // The regression this migration nearly shipped. stonedog-style's default
+      // The regression this migration nearly shipped. @stonedogcode/style's default
       // gate is the five app-wide appearances, so `ghost` fell through to
       // `solid` — silently, since a coerced variant still renders.
       expect(classOf(<StyledInputBool label="g" variant="ghost" />)).not.toBe(

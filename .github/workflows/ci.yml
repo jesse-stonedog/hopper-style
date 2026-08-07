@@ -1,4 +1,4 @@
-# The merge gate for stonedog-style.
+# The merge gate for @stonedogcode/style.
 #
 # Until now there was none: every PR merged on a locally-run gate recorded in a
 # comment (NEH-235). That is the same command CI runs, so it was real testing —

@@ -1,4 +1,4 @@
-# stonedog-style
+# @stonedogcode/style
 
 A themeable [Panda CSS](https://panda-css.com) design system: a preset of design
 tokens and recipes, plus the React components built on them.
@@ -29,7 +29,7 @@ npm install "git+https://github.com/stonedog-code/stonedog-style.git#<sha>"
 # Option B — submodule + file: dependency (use this in a monorepo)
 git submodule add git@github.com:stonedog-code/stonedog-style.git packages/stonedog-style
 #   then in the consuming app's package.json:
-#   "stonedog-style": "file:../../packages/stonedog-style"
+#   "@stonedogcode/style": "file:../../packages/stonedog-style"
 ```
 
 Pin to a commit rather than tracking a branch: this package ships source that
@@ -47,7 +47,7 @@ but invisibly or unstyled, with no error anywhere to tell you why.
 
 ```ts
 import { defineConfig } from "@pandacss/dev";
-import { stonedogStylePreset } from "stonedog-style/preset";
+import { stonedogStylePreset } from "@stonedogcode/style/preset";
 
 export default defineConfig({
   // Listing `presets` REPLACES Panda's defaults rather than adding to them,
@@ -62,7 +62,7 @@ export default defineConfig({
     "./src/**/*.{ts,tsx}",
     // Panda finds styles by parsing source. A package it never parses
     // contributes no CSS, and its components render unstyled.
-    "./node_modules/stonedog-style/src/**/*.tsx",
+    "./node_modules/@stonedogcode/style/src/**/*.tsx",
   ],
   outdir: "styled-system",
   jsxFramework: "react",
@@ -74,7 +74,7 @@ because Panda extracts styles statically at *your* build. In Next.js:
 
 ```js
 // next.config.js
-module.exports = { transpilePackages: ["stonedog-style"] };
+module.exports = { transpilePackages: ["@stonedogcode/style"] };
 ```
 
 **3 — define the custom properties. This is the step that bites.** Every colour
@@ -85,7 +85,7 @@ serves, and shows you a blank page.
 There are **44** of them. Get the list at runtime rather than copying one:
 
 ```ts
-import { requiredCssCustomProperties } from "stonedog-style/preset";
+import { requiredCssCustomProperties } from "@stonedogcode/style/preset";
 
 requiredCssCustomProperties();           // --hopper-* (default)
 requiredCssCustomProperties("optima");   // --optima-*, if you set cssVarPrefix
@@ -178,7 +178,7 @@ One optional extra, not in that list because it has a working fallback:
 **4 — mount the provider** (optional; omitting it gives readable defaults):
 
 ```tsx
-import { StonedogStyleProvider } from "stonedog-style";
+import { StonedogStyleProvider } from "@stonedogcode/style";
 
 <StonedogStyleProvider fontSizeProfile="md" variant="solid">
   <App />
@@ -211,7 +211,7 @@ If all three pass and the UI is still blank, you are missing step 3.
 ## Use
 
 ```tsx
-import { StyledBox, StyledHeading, StyledText, StyledVStack } from "stonedog-style";
+import { StyledBox, StyledHeading, StyledText, StyledVStack } from "@stonedogcode/style";
 
 export function Panel() {
   return (
@@ -297,7 +297,7 @@ and without the types your build fails on our source, not yours.
 ```ts
 // 2. panda.config.ts — all four points below matter
 import { defineConfig } from "@pandacss/dev";
-import { stonedogStylePreset } from "stonedog-style/preset";
+import { stonedogStylePreset } from "@stonedogcode/style/preset";
 
 export default defineConfig({
   preflight: false,
@@ -308,13 +308,41 @@ export default defineConfig({
   ],
   include: [
     "./src/**/*.{ts,tsx}",
-    "./node_modules/stonedog-style/src/**/*.tsx",  // (c) REQUIRED
+    "./node_modules/@stonedogcode/style/src/**/*.tsx",  // (c) REQUIRED
   ],
-  exclude: ["./node_modules/stonedog-style/src/**/__tests__/**/*"],  // (d)
+  exclude: ["./node_modules/@stonedogcode/style/src/**/__tests__/**/*"],  // (d)
   outdir: "styled-system",
   jsxFramework: "react",
 });
 ```
+
+> **Upgrading from `stonedog-style`?** The package moved to the
+> `@stonedogcode` scope at `0.8.1`, and npm installs a scoped package one
+> directory deeper — `node_modules/@stonedogcode/style/`, not
+> `node_modules/stonedog-style/`. **So the `include` glob above changes, and
+> getting it wrong is silent.** A glob that matches nothing produces no build
+> error: components still render, with class names that have no CSS behind
+> them. Only a component using an inline `styled(…, { base: … })` shows it,
+> because everything else takes its CSS from the preset recipes, which Panda
+> emits from config *without reading source*.
+>
+> Two things do **not** move. A `packages/stonedog-style/**` glob names a
+> *submodule checkout directory*, which is unaffected by the package's name —
+> changing it is its own silent breakage. And the `transpilePackages` entry in
+> `next.config` **does** move, because that one names the package.
+>
+> Assert it rather than eyeballing it — this is the only failure here with no
+> other symptom:
+>
+> ```ts
+> // panda.test.ts
+> import { globSync } from "tinyglobby";
+> it("every stonedog glob resolves to real files", () => {
+>   for (const g of config.include.filter((p) => p.includes("stonedogcode"))) {
+>     expect(globSync(g).length).toBeGreaterThan(0);
+>   }
+> });
+> ```
 
 ```jsonc
 // 3. tsconfig.json — so the generated `styled-system/*` imports resolve
@@ -334,7 +362,7 @@ export default defineConfig({
 ```tsx
 // 4. Your root — theme first, then the provider
 import "./theme.css";                 // the 44 properties, from step 3 above
-import { StonedogStyleProvider } from "stonedog-style";
+import { StonedogStyleProvider } from "@stonedogcode/style";
 
 export function Root({ children }) {
   return (
@@ -372,7 +400,7 @@ Silent by default — a component that renders a few hundred times a second must
 not decide your console should fill up. Opt in at startup:
 
 ```ts
-import { setStyleLogger } from "stonedog-style";
+import { setStyleLogger } from "@stonedogcode/style";
 setStyleLogger(myLogger); // trace / debug / info / warn / error
 ```
 
@@ -385,7 +413,7 @@ Heroicons, Font Awesome, Material Symbols, your designer's SVGs — all equally
 supported, and you can mix them.
 
 ```tsx
-import { StyledIcon } from "stonedog-style";
+import { StyledIcon } from "@stonedogcode/style";
 import { Home } from "lucide-react";
 
 <StyledIcon icon={<Home />} size="lg" />;
@@ -399,7 +427,7 @@ how a set drifts — one forgets to forward `size`, another hardcodes a colour.
 
 ```tsx
 // icons.tsx — your own module, in your own repo
-import { createIcon, createIconFromComponent } from "stonedog-style";
+import { createIcon, createIconFromComponent } from "@stonedogcode/style";
 import { Home, Trash2 } from "lucide-react";
 
 export const StyledHome  = createIcon("StyledHome", <Home />);
@@ -476,7 +504,7 @@ icon-only rendering, not even collapsed. Full reasoning in
 [PRD-0001](docs/prd/PRD-0001-styled-sidebar.md).
 
 ```tsx
-import { StyledSidebar, type SidebarItem } from "stonedog-style";
+import { StyledSidebar, type SidebarItem } from "@stonedogcode/style";
 
 const tools: SidebarItem[] = [
   { id: "calendar", icon: <StyledCalendar />, label: "Calendar",
@@ -582,8 +610,8 @@ Then, for `apps/web/src/app/components/Styled/StyledX.tsx`:
 Call sites stay untouched:
 
 ```tsx
-export { StyledX as default, StyledX } from "stonedog-style";
-export type { StyledXProps } from "stonedog-style";
+export { StyledX as default, StyledX } from "@stonedogcode/style";
+export type { StyledXProps } from "@stonedogcode/style";
 ```
 
 **If the app needs behaviour the shared one deliberately does not have**, keep a
@@ -606,7 +634,7 @@ Nothing to unpick — these have no local copy to replace. Take the dependency
 (see Install), then import:
 
 ```tsx
-import { StyledSpinner } from "stonedog-style";
+import { StyledSpinner } from "@stonedogcode/style";
 ```
 
 `optima-filings` is public and AGPLv3 and ships a public Docker image, so it
