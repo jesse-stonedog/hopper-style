@@ -35,8 +35,17 @@ Releasing: bump the version, land it, then from a clean `main` checkout run
 `npm run gate` and `npm publish --access public` (needs a 2FA OTP, or a
 granular token with bypass-2FA). A published version can never be reused.
 
-`stonedog-theme` ships alongside at the same version — it is where colours come
-from, and this package deliberately knows none.
+`stonedog-theme` is where colours come from, and this package deliberately knows
+none. **They version independently** — style was 0.10.1 and theme 0.3.0 on
+2026-08-08, and they have not moved together for a long time.
+
+This entry used to say they ship "at the same version". That was wrong and worth
+correcting rather than deleting, because it is the kind of claim someone leans on
+when deciding whether a theme bump is *needed* alongside a style bump. It is
+not: bump theme when the theme changes. The coupling that does exist is the
+token contract — style names a token, theme defines the custom property behind
+it — and a mismatch there shows up as an invisible element, not as a version
+number.
 
 ## What this is
 
@@ -171,12 +180,29 @@ path keeps working.
 
 ### The consumers
 
-| Repo | On disk | Visibility | `densityBase` | Notes |
-|---|---|---|---|---|
-| HopperGuard (`hopper-web`) | `~/src/elderlink/hopperguard`, submodule `packages/stonedog-style` | private | `spacious` | elder audience; pins its own `--font-sizes-*` |
-| `optima-filings` | `~/src/stonedogcode/optima/optima-filings` | public, AGPLv3 | `compact` | `cssVarPrefix: "optima"` |
-| `optima-cloud-saas` | `~/src/stonedogcode/optima/optima-cloud-saas` | private | `compact` | `cssVarPrefix: "optima"` |
-| RozCards | `~/src/stonedogcode/card-sorter/rozcards` | private | `standard` | **not yet a consumer** — Tailwind v4 today (NEH-255) |
+**All four are live consumers**, and all four sat at 0.10.1 as of 2026-08-08.
+
+| Repo | On disk | Consumes via | Visibility | `densityBase` | Notes |
+|---|---|---|---|---|---|
+| HopperGuard (`hopper-web`) | `~/src/elderlink/hopperguard` | **submodule** `packages/stonedog-style` | private | `spacious` | elder audience; pins its own `--font-sizes-*` |
+| `optima-filings` | `~/src/stonedogcode/optima/optima-filings` | **submodule** `packages/stonedog-style` | public, AGPLv3 | `compact` | `cssVarPrefix: "optima"` |
+| `optima-cloud-saas` | `~/src/stonedogcode/optima/optima-cloud-saas` | **npm** | private | `compact` | `cssVarPrefix: "optima"`; the only npm consumer |
+| RozCards | `~/src/stonedogcode/card-sorter/rozcards` | **submodule** `packages/stonedog-style` | private | `standard` | |
+
+**RozCards was recorded here as "not yet a consumer — Tailwind v4 today
+(NEH-255)" until 2026-08-08, and it had not been true for some time.** It has
+the submodule, a `panda.config.ts` that imports the preset and globs the
+package's source, and live import sites. That error was the harmful direction:
+it told anyone doing a cross-consumer sweep that RozCards could be skipped, and
+**skipping a Panda consumer fails silently** — components render with class
+names that have no CSS behind them, with no build error and no console warning.
+
+The lesson generalises to this whole table: it describes four other
+repositories, so it goes stale without anything here changing. Check it against
+the repos before trusting it for a sweep — `git -C <repo> ls-tree origin/main
+packages/stonedog-style` answers the pin question in one line, and
+**`origin/main`, not a local checkout** (a stale working tree is what made this
+row wrong in both directions on the same day).
 
 A change that suits one must not regress the others, which is what the
 default-pinning tests are guarding. Note the old names: this package's docs used
