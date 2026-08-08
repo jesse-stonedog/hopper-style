@@ -112,3 +112,57 @@ describe("the font-size scale", () => {
     expect(getFontSizeValue("gigantic")).toBe("unknown");
   });
 });
+
+/**
+ * Block promotion (NEH-490).
+ *
+ * These assert the STYLE ATTRIBUTE, which is all jsdom can honestly answer —
+ * it has no layout engine, so "does the margin actually move anything" is a
+ * question only `StyledText.ct.tsx` can settle in a real browser. Both tiers
+ * are here on purpose; neither replaces the other.
+ */
+describe("block promotion", () => {
+  it("is inline by default", () => {
+    render(<StyledText>plain</StyledText>);
+    expect(screen.getByText("plain")).not.toHaveStyle({ display: "block" });
+  });
+
+  it.each([
+    ["marginBottom", { marginBottom: "4" }],
+    ["marginTop", { marginTop: "4" }],
+    ["paddingBlock", { paddingBlock: "4" }],
+    ["mb", { mb: "4" }],
+    ["the explicit block prop", { block: true }],
+  ])("promotes to a block box for %s", (_label, props) => {
+    render(<StyledText {...(props as object)}>promoted</StyledText>);
+    expect(screen.getByText("promoted")).toHaveStyle({ display: "block" });
+  });
+
+  /**
+   * Horizontal spacing must NOT promote. It works on an inline box, and inline
+   * text mid-sentence is the commonest use of this component — promoting here
+   * would break working layout to fix an unrelated problem.
+   */
+  it.each([
+    ["marginLeft", { marginLeft: "4" }],
+    ["marginInline", { marginInline: "4" }],
+    ["mx", { mx: "4" }],
+  ])("does NOT promote for %s", (_label, props) => {
+    render(<StyledText {...(props as object)}>inline</StyledText>);
+    expect(screen.getByText("inline")).not.toHaveStyle({ display: "block" });
+  });
+
+  it("lets an explicit display from the caller win", () => {
+    render(
+      <StyledText marginBottom="4" style={{ display: "inline-flex" }}>
+        explicit
+      </StyledText>,
+    );
+    expect(screen.getByText("explicit")).toHaveStyle({ display: "inline-flex" });
+  });
+
+  it("does not leak the block prop onto the DOM node", () => {
+    render(<StyledText block>clean</StyledText>);
+    expect(screen.getByText("clean")).not.toHaveAttribute("block");
+  });
+});
