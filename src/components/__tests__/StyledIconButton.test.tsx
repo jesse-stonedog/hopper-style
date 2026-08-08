@@ -95,21 +95,43 @@ describe("StyledIconButton", () => {
   });
 
   describe("the props that were dropped", () => {
+    const STALE = {
+      confirm: true,
+      confirmTitle: "Sure?",
+      confirmBody: "Really?",
+      onConfirm: () => {},
+      loading: true,
+      noBackground: true,
+    } as unknown as Record<string, unknown>;
+
     it("still renders when a stale caller passes a removed prop", () => {
       // confirm/confirmTitle/confirmBody/onConfirm/loading/noBackground all had
       // ZERO effective call sites: the confirm dialog was never triggered,
       // `loading` was never passed, and `noBackground` was accepted and ignored.
-      const stale = {
-        confirm: true,
-        confirmTitle: "Sure?",
-        loading: true,
-        noBackground: true,
-      } as unknown as Record<string, unknown>;
       render(
-        <StyledIconButton aria-label="Go" {...stale}><Icon /></StyledIconButton>,
+        <StyledIconButton aria-label="Go" {...STALE}><Icon /></StyledIconButton>,
       );
       expect(screen.getByRole("button", { name: "Go" })).toBeInTheDocument();
     });
+
+    it("drops them instead of forwarding them to the DOM (NEH-498)", () => {
+      // "Ignored" used to mean "spread onto the element", so `confirm={true}`
+      // landed as an invalid attribute and React warned about each one — noise
+      // in every consumer's console, for props that do nothing.
+      render(
+        <StyledIconButton aria-label="Go" {...STALE}><Icon /></StyledIconButton>,
+      );
+      const button = screen.getByRole("button", { name: "Go" });
+      for (const name of Object.keys(STALE)) {
+        expect(button).not.toHaveAttribute(name.toLowerCase());
+      }
+    });
+
+    // Deliberately NOT a console.error spy. React remembers which prop names it
+    // has already complained about, process-wide, so a spy in a file that has
+    // rendered the component before sees nothing whether or not the props leak
+    // — it passed against the unfixed component. The DOM assertion above is the
+    // guard; the quiet console is its consequence.
   });
 
   it("forwards a ref", () => {
