@@ -39,6 +39,19 @@ const COLOR_TOKENS: TokenMap = {
   textPop: "text-pop-text",
   textError: "text-error-text",
   textWarning: "text-warning-text",
+  // Added NEH-519. The contract could express failure and caution but not
+  // success, so every consumer that needed one improvised — and the obvious
+  // substitute, `textAccent`, is wrong: accent is whatever the host theme sets
+  // it to, with nothing constraining it to read as positive, so a confirmation
+  // could land in an alarming colour. HopperGuard had a live site doing exactly
+  // this dance (an SSO panel reporting "ok" vs error) and had to settle for
+  // neutral text.
+  //
+  // Deliberately NOT in TEXT_BACKGROUND_PAIRS, matching textError and
+  // textWarning: a meaning-carrying colour appears on whatever surface the
+  // message happens to sit on, so there is no single pairing to contrast-check
+  // it against.
+  textSuccess: "text-success-text",
 
   // Text on each surface. Pair these with the matching `boxBg*` — see
   // TEXT_BACKGROUND_PAIRS for which goes with which.
