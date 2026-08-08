@@ -57,6 +57,28 @@ export interface StyledIconButtonProps extends HTMLStyledProps<"button"> {
   rel?: string;
 }
 
+/**
+ * Props this component used to accept and no longer honours (NEH-498).
+ *
+ * They are dropped rather than forwarded because everything else in `rest` is
+ * spread onto the element: left alone, `confirm={true}` reaches the DOM as an
+ * invalid attribute and React warns about each one in the consumer's console.
+ * The doc above already promised these were ignored — this is what makes that
+ * true.
+ *
+ * This is a migration seam with an end date. Delete it once no consumer passes
+ * any of them; none does today, which is why they were removed in the first
+ * place.
+ */
+const REMOVED_PROPS = [
+  "confirm",
+  "confirmTitle",
+  "confirmBody",
+  "onConfirm",
+  "loading",
+  "noBackground",
+] as const;
+
 /** Map the full vocabulary onto what the recipe can actually paint. */
 function toIconVariant(variant: AllowedVariant): IconButtonVariant {
   if (variant === "unstyled") return "ghost";
@@ -91,6 +113,10 @@ const StyledIconButton = React.forwardRef<HTMLButtonElement, StyledIconButtonPro
     // cascade — so a caller stacking a button above a sibling would find it
     // ignored.
     const { zIndex, style, className: incoming, ...restWithoutZIndex } = rest;
+
+    for (const prop of REMOVED_PROPS) {
+      delete (restWithoutZIndex as Record<string, unknown>)[prop];
+    }
 
     return (
       <StyledTooltip tooltip={tooltip} placement={placement}>

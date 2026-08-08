@@ -62,6 +62,30 @@ describe("StyledInputRadio", () => {
     expect(screen.getByRole("radio", { name: /Monthly save 20%/ })).toBeInTheDocument();
   });
 
+  it("marks the inputs read-only when no onChange is given (NEH-498)", () => {
+    // `checked` is always passed, so without a handler React called the group
+    // read-only ITSELF and warned once per radio — twelve warnings across this
+    // file, and the same in every consumer's console. Saying it outright is
+    // both accurate and quiet.
+    //
+    // Asserted on the attribute rather than with a console.error spy: React
+    // remembers which warnings it has already emitted, process-wide, so a spy
+    // running after any earlier render here sees nothing either way.
+    render(<StyledInputRadio items={ITEMS} name="cycle" value="yearly" label="C" />);
+    for (const radio of screen.getAllByRole("radio")) {
+      expect(radio).toHaveAttribute("readonly");
+    }
+  });
+
+  it("does not mark them read-only when onChange is given", () => {
+    render(
+      <StyledInputRadio items={ITEMS} name="cycle" value="yearly" label="C" onChange={() => {}} />,
+    );
+    for (const radio of screen.getAllByRole("radio")) {
+      expect(radio).not.toHaveAttribute("readonly");
+    }
+  });
+
   it("reflects the selected value", () => {
     render(<StyledInputRadio items={ITEMS} name="cycle" value="yearly" label="C" />);
     expect(screen.getByRole("radio", { name: "Yearly" })).toBeChecked();

@@ -32,6 +32,14 @@ import { useResolvedVariant } from "../config/style-config";
  * radio rather than the group or the selection — reliably the wrong element.
  * It now points at the group container. Nothing was using it.
  *
+ * ## `onChange` is optional, and its absence means read-only (NEH-498)
+ *
+ * `checked` is always passed, so the inputs are controlled whether or not a
+ * handler is. Without one React reverts every click *and* warns once per radio
+ * in the consumer's console — a warning about nothing, which is the kind that
+ * teaches people to ignore the real ones. The inputs are marked `readOnly`
+ * instead, which is what the group actually is.
+ *
  * The container is a plain `<div>` rather than `StyledBox`, which is what the
  * original used. `StyledBox` wraps its children in an inner element unless told
  * not to, and that element would sit between the `radiogroup` and its radios —
@@ -121,7 +129,10 @@ const StyledInputRadio = React.forwardRef<HTMLDivElement, StyledInputRadioProps>
                 value={radio.value}
                 checked={value === radio.value}
                 disabled={radio.disabled}
-                onChange={onChange}
+                // A group with no `onChange` really is read-only — React reverts
+                // the click on a controlled input either way — so say so rather
+                // than leave React to warn about it in every consumer's console.
+                {...(onChange ? { onChange } : { readOnly: true })}
                 className={input}
               />
               <div className={control}>
