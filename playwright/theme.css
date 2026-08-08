@@ -13,6 +13,9 @@
   --hopper-text-pop-text: #38bdf8;
   --hopper-text-error-text: #f87171;
   --hopper-text-warning-text: #fbbf24;
+  /* NEH-519. Green rather than the accent, because this token exists precisely
+     so success is not signalled with a colour that means something else. */
+  --hopper-text-success-text: #4ade80;
   --hopper-box-main-text: #f8fafc;
   --hopper-box-primary-text: #f8fafc;
   --hopper-box-secondary-text: #f1f5f9;
