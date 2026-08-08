@@ -482,6 +482,37 @@ Without that a themed typeface reaches the page and stops at every control on
 it. This package still owns SHAPE — the size scale, line height and density are
 untouched; family and weight are BRAND and only pass through.
 
+## A component must not accept a prop it cannot honour (NEH-490)
+
+`StyledText` renders a `<span>`, and CSS **ignores vertical margins on inline
+boxes**. So `marginBottom="1"` emitted the rule, put the class in the DOM,
+reported `margin-bottom: 8px` from `getComputedStyle`, and moved nothing —
+while JSX stripped the whitespace between siblings, welding two paragraphs into
+one run. It shipped that way in both Optima and HopperGuard.
+
+**It worked in some places, which is what made it invisible.** Flex items are
+blockified, so the same component inside a `StyledStack` behaves perfectly and
+inside a `StyledBox` does not. Whoever adds the prop sees it work in whatever
+they tested.
+
+A vertical spacing prop now promotes the box to `display: block` (and `block`
+is available for the case with no spacing prop to imply it). This cannot break
+anything that worked: on an inline box those declarations were already
+discarded, so nothing could depend on their effect. Horizontal margins
+deliberately do **not** promote — they work inline, and mid-sentence text is
+the commonest use of this component.
+
+The general rule, which outlives this bug: **if a prop cannot take effect on
+the element a component renders, the component is wrong, not the call site.**
+Silently accepting it means every consumer writes correct-looking code that
+does nothing, and the failure surfaces as a copy bug months later.
+
+Note which tier caught it. jsdom asserts the style attribute and would have
+passed against the original defect just as happily; `StyledText.ct.tsx`
+measures two bounding boxes in a real browser. That test was verified by
+disabling the promotion and watching 4 of 12 fail — a layout guard nobody has
+seen fail is not yet a guard.
+
 ## Accessibility is a floor, not a feature
 
 The originating product serves an often-elderly, sometimes cognitively-impaired
